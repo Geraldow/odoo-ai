@@ -207,6 +207,67 @@ Google Drive/Engram/engram-sync/
     └── Bob/
 ```
 
+```mermaid
+flowchart LR
+    subgraph machine ["  Your Machine  "]
+        direction TB
+        agent(["🤖 AI Agent"])
+        hook["⚡ Stop Hook\nengram-sync.ps1"]
+        db[("🧠 engram\nlocal SQLite")]
+        detect["📂 Workspace Detection\nsingle-project → sync one\nmulti-project → sync all"]
+
+        agent -->|"session ends"| hook
+        hook --> detect
+        detect <-->|"read / write"| db
+    end
+
+    subgraph drive ["  Google Drive · engram-sync/  "]
+        direction TB
+        subgraph pa ["  project-a/  "]
+            direction LR
+            a1["Alice/\n.engram/"]
+            b1["Bob/\n.engram/"]
+            c1["Carol/\n.engram/"]
+        end
+        subgraph pb ["  project-b/  "]
+            direction LR
+            a2["Alice/\n.engram/"]
+            b2["Bob/\n.engram/"]
+        end
+    end
+
+    subgraph team ["  Teammates  "]
+        direction TB
+        bob(["👤 Bob"])
+        carol(["👤 Carol"])
+    end
+
+    detect -->|"export — write only\nto your folder"| a1
+    detect -->|"export"| a2
+    detect -->|"import — read only"| b1
+    detect -->|"import — read only"| c1
+    b1 <-->|"Bob syncs"| bob
+    c1 <-->|"Carol syncs"| carol
+
+    classDef person  fill:#0d1117,stroke:#a855f7,stroke-width:2px,color:#a855f7
+    classDef teal    fill:#22d3ee,stroke:#0ea5e9,stroke-width:2px,color:#0d1117
+    classDef purple  fill:#714B67,stroke:#a855f7,stroke-width:2px,color:#fff
+    classDef violet  fill:#a855f7,stroke:#714B67,stroke-width:2px,color:#fff
+    classDef folder  fill:#1e1e2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
+
+    class agent,bob,carol person
+    class db teal
+    class hook,detect purple
+    class a1,a2 violet
+    class b1,b2,c1 folder
+
+    style machine fill:#0d2a2a,stroke:#22d3ee,stroke-width:1px,color:#fff
+    style drive   fill:#1a1a2e,stroke:#714B67,stroke-width:1px,color:#fff
+    style team    fill:#0d1117,stroke:#a855f7,stroke-width:1px,color:#fff
+    style pa      fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
+    style pb      fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
+```
+
 **To onboard a new teammate:**
 
 1. Share the project subfolder in Google Drive: right-click → Share → add their email as **Editor**
@@ -224,6 +285,52 @@ Every substantial change follows a structured pipeline before a single line of c
 
 ```
 explore → propose → spec → design → tasks → apply → verify → archive
+```
+
+```mermaid
+flowchart TB
+    dev(["👤 Developer"])
+
+    subgraph orch ["  Orchestrators  "]
+        direction LR
+        new["📦 /sdd-new\nexplore → propose"]
+        ff["⚡ /sdd-ff\npropose → tasks"]
+        cont["▶️ /sdd-continue\nresume at last gap"]
+    end
+
+    subgraph harnesses ["  Phase Harnesses — each runs as an isolated sub-agent  "]
+        direction LR
+        E["🔍 explore"] --> P["📋 propose"] --> S["📐 spec"] --> D["🏗️ design"] --> T["✅ tasks"] --> A["⚙️ apply"] --> V["🧪 verify"] --> AR["📦 archive"]
+    end
+
+    mem[("🧠 engram\nartifact store")]
+
+    dev --> orch
+    new -.->|"dispatches"| E
+    ff  -.->|"dispatches"| P
+    cont -.->|"resumes"| harnesses
+
+    P -->|"saves"| mem
+    S -->|"saves"| mem
+    D -->|"saves"| mem
+    T -->|"saves"| mem
+    A -->|"saves"| mem
+    AR -->|"full chain"| mem
+    mem -.->|"loads context"| A
+    mem -.->|"loads context"| V
+
+    classDef phase    fill:#714B67,stroke:#a855f7,stroke-width:2px,color:#fff
+    classDef orchNode fill:#a855f7,stroke:#714B67,stroke-width:2px,color:#fff
+    classDef memNode  fill:#22d3ee,stroke:#0ea5e9,stroke-width:2px,color:#0d1117
+    classDef person   fill:#0d1117,stroke:#a855f7,stroke-width:2px,color:#a855f7
+
+    class E,P,S,D,T,A,V,AR phase
+    class new,ff,cont orchNode
+    class mem memNode
+    class dev person
+
+    style harnesses fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#fff
+    style orch      fill:#1a1a2e,stroke:#a855f7,stroke-width:1px,color:#fff
 ```
 
 **Run the full pipeline in one command:**
