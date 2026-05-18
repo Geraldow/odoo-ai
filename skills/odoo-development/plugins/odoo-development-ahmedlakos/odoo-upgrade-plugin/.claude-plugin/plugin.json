@@ -1,0 +1,15 @@
+{
+  "name": "odoo-upgrade",
+  "version": "5.1.0",
+  "description": "Odoo ERP upgrade assistant for migrating modules between versions 14-19. Handles XML views, Python APIs, JavaScript/OWL, theme SCSS, manifests, and database migrations.",
+  "author": {
+    "name": "TaqaTechno",
+    "url": "https://github.com/taqat-techno"
+  },
+  "license": "MIT",
+  "keywords": ["odoo", "upgrade", "migration", "erp"],
+  "skills": ["./odoo-upgrade"],
+  "hooks": "./hooks/hooks.json",
+  "commands": "./commands",
+  "agents": "./agents"
+}
