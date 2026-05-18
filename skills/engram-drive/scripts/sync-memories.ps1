@@ -21,7 +21,6 @@ $config   = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
 $owner    = $config.owner
 $base     = $config.base
 $projects = $config.projects
-$team     = $config.team | ForEach-Object { $_.name }
 
 # Guards
 if (-not (Test-Path -LiteralPath $base)) {
@@ -48,11 +47,10 @@ if (-not $projects -or $projects.Count -eq 0) { exit 0 }
 $cwd     = (Get-Location).Path
 $cwdLeaf = Split-Path $cwd -Leaf
 
-$hasManifest    = Test-Path -LiteralPath ([System.IO.Path]::Combine($cwd, "__manifest__.py"))
 $isKnownProject = $projects -contains $cwdLeaf
 
-if ($hasManifest -and $isKnownProject) {
-    # Single-project mode
+if ($isKnownProject) {
+    # Single-project: CWD folder name matches a known project (e.g. Work/aeca/)
     $activeProjects = @($cwdLeaf)
 } else {
     # Multi-project or root workspace — sync all projects that have a Drive folder
