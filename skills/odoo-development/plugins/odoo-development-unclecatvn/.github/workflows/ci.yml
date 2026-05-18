@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate JSON manifests
+        run: |
+          set -euo pipefail
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json package.json; do
+            if [ -f "$f" ]; then
+              node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" \
+                && echo "ok  $f" \
+                || { echo "bad $f"; exit 1; }
+            fi
+          done
+
+      - name: Validate workflow YAML
+        run: |
+          python3 -c "
+          import sys, glob
+          try:
+              import yaml
+          except ImportError:
+              import subprocess
+              subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-q', 'pyyaml'])
+              import yaml
+          bad = 0
+          for path in glob.glob('.github/workflows/*.yml'):
+              try:
+                  yaml.safe_load(open(path))
+                  print(f'ok  {path}')
+              except Exception as e:
+                  print(f'bad {path}: {e}')
+                  bad += 1
+          sys.exit(1 if bad else 0)
+          "
+
+      - name: Run skill and manifest validator
+        run: npm test
+
+  changelog-guard:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require CHANGELOG section when package.json version changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if ! git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q '^package.json$'; then
+            echo "package.json unchanged; skipping changelog guard."
+            exit 0
+          fi
+
+          CUR="$(node -p "require('./package.json').version")"
+          PREV="$(git show "$BASE_SHA":package.json 2>/dev/null \
+            | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).version" 2>/dev/null || echo "")"
+
+          if [ "$CUR" = "$PREV" ]; then
+            echo "package.json changed but version unchanged; skipping."
+            exit 0
+          fi
+
+          echo "Version bump detected: $PREV -> $CUR"
+          if grep -Eq "^##\s+\[?v?${CUR//./\\.}\]?\s*$" CHANGELOG.md; then
+            echo "ok  CHANGELOG.md has section for v$CUR"
+          else
+            echo "::error::CHANGELOG.md missing section for v$CUR (expected '## [$CUR]')"
+            exit 1
+          fi

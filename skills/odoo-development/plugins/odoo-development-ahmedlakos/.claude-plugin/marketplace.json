@@ -1,0 +1,108 @@
+{
+  "name": "cloud-market",
+  "owner": {
+    "name": "ahmed-lakosha",
+    "email": "ahmed.lakosha94@gmail.com"
+  },
+  "metadata": {
+    "description": "Cloud Market — Professional Odoo development plugins for Claude Code. Each plugin uses 1 unified command + skill-driven natural language.",
+    "version": "2.0.0",
+    "plugins_count": 8
+  },
+  "plugins": [
+    {
+      "name": "odoo-upgrade",
+      "description": "Comprehensive Odoo module upgrade assistant (14-19). Pure skill-driven — no commands needed. Handles XML, Python, JS, SCSS, and data migrations.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-upgrade-plugin/odoo-upgrade"
+      ]
+    },
+    {
+      "name": "odoo-frontend",
+      "description": "Odoo frontend toolkit — 1 command (/odoo-frontend) with create-theme sub-command. Theme development, Figma extraction, PWA, publicWidget, OWL migration.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-frontend-plugin/skills/theme-create",
+        "./odoo-frontend-plugin/skills/theme-scss",
+        "./odoo-frontend-plugin/skills/theme-design",
+        "./odoo-frontend-plugin/skills/theme-snippets",
+        "./odoo-frontend-plugin/skills/frontend-js"
+      ],
+      "commands": [
+        "./odoo-frontend-plugin/commands"
+      ]
+    },
+    {
+      "name": "odoo-report",
+      "description": "Odoo email templates & QWeb reports — create, validate, migrate, and debug across Odoo 14-19. Pure skill-driven, no commands needed.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-report-plugin/odoo-report"
+      ]
+    },
+    {
+      "name": "odoo-test",
+      "description": "Odoo testing toolkit — 1 command (/odoo-test) with generate, data, run, coverage, e2e sub-commands. All also available via natural language.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-test-plugin/odoo-test"
+      ],
+      "commands": [
+        "./odoo-test-plugin/commands"
+      ]
+    },
+    {
+      "name": "odoo-security",
+      "description": "Odoo security auditor — 1 command (/odoo-security) with --layer and --severity flags. Access rules, routes, sudo, SQL injection scanning.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-security-plugin/odoo-security"
+      ],
+      "commands": [
+        "./odoo-security-plugin/commands"
+      ]
+    },
+    {
+      "name": "odoo-i18n",
+      "description": "Odoo i18n toolkit — 1 command (/odoo-i18n) with extract, validate, missing, export sub-commands. Arabic/RTL support.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-i18n-plugin/odoo-i18n"
+      ],
+      "commands": [
+        "./odoo-i18n-plugin/commands"
+      ]
+    },
+    {
+      "name": "odoo-service",
+      "description": "Odoo server lifecycle — 1 command (/odoo-service) with start, stop, init, db, docker, ide, scaffold, ready sub-commands. VSCode + PyCharm config generation.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-service-plugin/odoo-service"
+      ],
+      "commands": [
+        "./odoo-service-plugin/commands"
+      ]
+    },
+    {
+      "name": "odoo-docker",
+      "description": "Docker infrastructure for Odoo — 1 command (/odoo-docker) with init, compose, deploy, build sub-commands. Nginx, debugging, performance via natural language.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./odoo-docker-plugin/odoo-docker"
+      ],
+      "commands": [
+        "./odoo-docker-plugin/commands"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "name": "model-security-reminder",
+        "description": "Remind about access rules and sudo() when a Python model file is created or modified",
+        "matcher": "Write|Edit",
+        "inputPathRegex": "models/.*\\.py$",
+        "hooks": [
+          {
+            "type": "suggestion",
+            "message": "[odoo-security] Model file changed. Verify access rules exist in ir.model.access.csv and sudo() calls are justified.\nRun /odoo-security --layer=access to audit."
+          }
+        ]
+      },
+      {
+        "name": "controller-security-reminder",
+        "description": "Remind about route authentication and CSRF when a controller file is created or modified",
+        "matcher": "Write|Edit",
+        "inputPathRegex": "controllers/.*\\.py$",
+        "hooks": [
+          {
+            "type": "suggestion",
+            "message": "[odoo-security] Controller file changed. Verify @http.route() has explicit auth= and csrf protection.\nRun /odoo-security --layer=routes to audit."
+          }
+        ]
+      },
+      {
+        "name": "access-csv-changed",
+        "description": "Remind to validate access CSV completeness after any change to ir.model.access.csv",
+        "matcher": "Write|Edit",
+        "inputPathRegex": "ir\\.model\\.access\\.csv$",
+        "hooks": [
+          {
+            "type": "suggestion",
+            "message": "[odoo-security] Access CSV modified. Verify model_id:id format (model_ prefix, dots to underscores) and group references.\nRun /odoo-security --layer=access to validate."
+          }
+        ]
+      },
+      {
+        "name": "wizard-security-reminder",
+        "description": "Remind about TransientModel access rules when a wizard file is created or modified",
+        "matcher": "Write|Edit",
+        "inputPathRegex": "wizard.*\\.py$",
+        "hooks": [
+          {
+            "type": "suggestion",
+            "message": "[odoo-security] Wizard file changed. TransientModel requires ir.model.access.csv entry with perm_create=1, perm_unlink=1.\nRun /odoo-security --layer=access to verify."
+          }
+        ]
+      },
+      {
+        "name": "manifest-security-check",
+        "description": "Remind about security file ordering in manifest when __manifest__.py is modified",
+        "matcher": "Write|Edit",
+        "inputPathRegex": "__manifest__\\.py$",
+        "hooks": [
+          {
+            "type": "suggestion",
+            "message": "[odoo-security] Manifest changed. Verify security file order in data: groups XML first, then ir.model.access.csv, then rules XML."
+          }
+        ]
+      }
+    ]
+  }
+}

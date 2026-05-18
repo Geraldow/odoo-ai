@@ -1,0 +1,10 @@
+# Normalize line endings so Windows/macOS/Linux collaborators don't churn diffs
+* text=auto eol=lf
+
+# Explicit text types
+*.md   text eol=lf
+*.py   text eol=lf
+*.xml  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
