@@ -146,6 +146,16 @@ The installer will walk you through:
 5. **Skills installation** — copies all skills to `~/.claude/skills/`
 6. **Config generation** — creates `~/.claude/engram-sync-config.json` with your detected Odoo paths pre-filled
 
+### Keeping plugins up to date
+
+To pull the latest version of all external plugins from their original repositories:
+
+```powershell
+pwsh -File update.ps1
+```
+
+Then re-run `install.ps1` (or copy the updated plugins manually) to apply changes to your skills directory.
+
 ### First run
 
 Open your AI agent in your Odoo project directory, then:
@@ -281,11 +291,11 @@ odoo-ai is built on the shoulders of outstanding open-source work:
 |---|---|---|
 | [Gentle AI](https://github.com/Gentleman-Programming/gentle-ai) | [Gentleman Programming](https://github.com/Gentleman-Programming) | Foundation architecture: SDD methodology, harness system, and skill registry that this framework extends |
 | [Engram](https://github.com/Gentleman-Programming/engram) | [Gentleman Programming](https://github.com/Gentleman-Programming) | Persistent memory plugin — the knowledge layer that makes agents remember across sessions and across teammates |
-| [Odoo Marketplace Plugins](https://github.com/ahmedlakos) | [ahmedlakos](https://github.com/ahmedlakos) | 8 specialized Odoo plugins: Docker, frontend/themes, i18n, reports, security, services, testing, and upgrade migrations |
-| [odoo-claude-skills](https://github.com/maingocdoan) | [maingocdoan](https://github.com/maingocdoan) | Odoo development and E2E testing skills for Claude Code |
-| [Odoo Claude Skills](https://github.com/peterurban) | [peterurban](https://github.com/peterurban) | Curated skills covering actions, API, QWeb, server actions, and visual patterns |
-| [Agent Skills](https://github.com/unclecatvn) | [unclecatvn](https://github.com/unclecatvn) | Agent-oriented skill architecture and Odoo development patterns |
-| [odoo-development-skill](https://github.com/fhidalgo) | [fhidalgo](https://github.com/fhidalgo) | Universal Odoo development skill based on strict OCA standards (v14–19), with code review and upgrade analysis agents |
+| [odoo-plugins](https://github.com/ahmed-lakosha/odoo-plugins) | [ahmed-lakosha](https://github.com/ahmed-lakosha) | 8 specialized Odoo plugins: Docker, frontend/themes, i18n, reports, security, services, testing, and upgrade migrations |
+| [odoo-claude-skills](https://github.com/maingocdoan1809/odoo-claude-skills) | [maingocdoan1809](https://github.com/maingocdoan1809) | Odoo development and E2E testing skills for Claude Code |
+| [odoo-claude-skills](https://github.com/PeterUrban111/odoo-claude-skills) | [PeterUrban111](https://github.com/PeterUrban111) | Curated skills covering actions, API, QWeb, server actions, and visual patterns |
+| [agent-skills](https://github.com/unclecatvn/agent-skills) | [unclecatvn](https://github.com/unclecatvn) | Agent-oriented skill architecture and Odoo development patterns |
+| [odoo-development-skill](https://github.com/fhidalgodev/odoo-development-skill) | [fhidalgodev](https://github.com/fhidalgodev) | Universal Odoo development skill based on strict OCA standards (v14–19), with code review and upgrade analysis agents |
 
 ---
 
