@@ -1,0 +1,18 @@
+{
+  "_readme": "Copy this file to ~/.claude/engram-sync-config.json and fill in your details. Then run /engram-drive setup to create the Drive folder structure.",
+
+  "owner": "YourFirstName",
+
+  "base": "G:\\My Drive\\Engram\\engram-sync",
+
+  "projects": [],
+
+  "team": [
+    {
+      "name": "YourFirstName",
+      "display": "Your Full Name",
+      "email": "your@email.com",
+      "role": "developer"
+    }
+  ]
+}
