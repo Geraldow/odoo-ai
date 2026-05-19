@@ -75,7 +75,7 @@ jobs:
         run: |
           $missing = @()
           if (Test-Path "skills") {
-            Get-ChildItem -Path "skills" -Directory | ForEach-Object {
+            Get-ChildItem -Path "skills" -Directory | Where-Object { $_.Name -notlike '_*' } | ForEach-Object {
               $skillMd = Join-Path $_.FullName "SKILL.md"
               if (-not (Test-Path -LiteralPath $skillMd)) {
                 $missing += "  ❌ Missing: skills/$($_.Name)/SKILL.md"
