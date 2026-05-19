@@ -1,0 +1,115 @@
+name: Release — odoo-ai Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ── TASK 2.1: Release job skeleton ──────────────────────────────
+  release:
+    name: Build and Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $ref = $env:GITHUB_REF
+          if ($ref -match 'refs/tags/v(\d+\.\d+\.\d+)$') {
+            $version = $Matches[1]
+            Write-Host "✅ Version: $version"
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            $version = "0.0.0-manual"
+            Write-Host "ℹ️  Manual dispatch — using version: $version"
+          } else {
+            Write-Host "❌ Could not extract version from: $ref"
+            exit 1
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Create dist directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path dist | Out-Null
+
+      # ── TASK 2.2: ZIP packaging ──────────────────────────────────
+      - name: Package ZIP
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $zipPath = "dist\odoo-ai-v${version}.zip"
+
+          $include = @()
+          if (Test-Path "install.ps1")       { $include += "install.ps1" }
+          if (Test-Path "update.ps1")         { $include += "update.ps1" }
+          if (Test-Path "skills")             { $include += "skills" }
+          if (Test-Path "scripts")            { $include += "scripts" }
+          if (Test-Path "config-templates")   { $include += "config-templates" }
+          if (Test-Path "assets")             { $include += "assets" }
+          if (Test-Path "README.md")          { $include += "README.md" }
+          if (Test-Path "LICENSE")            { $include += "LICENSE" }
+
+          Compress-Archive -Path $include -DestinationPath $zipPath -Force
+          Write-Host "📦 Package created: $zipPath"
+          Get-Item $zipPath | Select-Object Name, @{N='Size';E={"{0:N0} KB" -f ($_.Length / 1KB)}}
+
+      # ── TASK 2.3: ps2exe .exe compilation ───────────────────────
+      - name: Build install.exe
+        shell: pwsh
+        run: |
+          Install-Module -Name ps2exe -Scope CurrentUser -Force -Repository PSGallery
+          Invoke-ps2exe -InputFile install.ps1 -OutputFile dist\install.exe -NoConsole:$false
+          Write-Host "✅ install.exe compiled"
+          Get-Item "dist\install.exe" | Select-Object Name, @{N='Size';E={"{0:N0} KB" -f ($_.Length / 1KB)}}
+
+      # ── TASK 2.4: GitHub Release creation ───────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## odoo-ai v${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+
+            **Option A — Installer (recommended)**
+            1. Download `install.exe`
+            2. Double-click to run — follows the interactive setup wizard
+
+            **Option B — ZIP**
+            1. Download `odoo-ai-v${{ steps.version.outputs.VERSION }}.zip`
+            2. Extract to any folder
+            3. Run: `powershell -File install.ps1`
+
+            ### Prerequisites
+            - Windows 10/11 with PowerShell 7+
+            - Claude Code CLI (`claude`)
+            - Git
+          files: |
+            dist/odoo-ai-v${{ steps.version.outputs.VERSION }}.zip
+            dist/install.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host ""
+          Write-Host "════════════════════════════════════════"
+          Write-Host "  Release Pipeline Complete"
+          Write-Host "  Version: v${{ steps.version.outputs.VERSION }}"
+          Write-Host "════════════════════════════════════════"
