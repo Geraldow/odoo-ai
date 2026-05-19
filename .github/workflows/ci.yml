@@ -1,0 +1,124 @@
+name: CI — odoo-ai Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - develop
+
+jobs:
+  validate:
+    name: Validate Repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── TASK 1.2: PowerShell syntax validation ────────────────
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem -Path . -Filter "*.ps1" -Recurse | ForEach-Object {
+            $tokens = $null; $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName, [ref]$tokens, [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              foreach ($e in $parseErrors) {
+                $errors += "  $($_.Name):$($e.Extent.StartLineNumber) — $($e.Message)"
+              }
+            } else {
+              Write-Host "  ✅ $($_.Name)"
+            }
+          }
+          if ($errors.Count -gt 0) {
+            Write-Host "❌ PowerShell syntax errors found:"
+            $errors | ForEach-Object { Write-Host $_ }
+            exit 1
+          }
+          Write-Host "✅ All PowerShell files pass syntax check"
+
+      # ── TASK 1.3: JSON config template validation ─────────────
+      - name: Validate JSON config templates
+        shell: pwsh
+        run: |
+          $errors = @()
+          if (Test-Path "config-templates") {
+            Get-ChildItem -Path "config-templates" -Filter "*.json" | ForEach-Object {
+              try {
+                Get-Content $_.FullName -Raw | ConvertFrom-Json | Out-Null
+                Write-Host "  ✅ $($_.Name)"
+              } catch {
+                $errors += "  ❌ $($_.Name): $_"
+              }
+            }
+          } else {
+            Write-Host "  ℹ️  config-templates/ not found — skipped"
+          }
+          if ($errors.Count -gt 0) {
+            Write-Host "❌ JSON validation errors:"
+            $errors | ForEach-Object { Write-Host $_ }
+            exit 1
+          }
+          Write-Host "✅ All JSON config templates are valid"
+
+      # ── TASK 1.4: SKILL.md structure check ────────────────────
+      - name: Validate SKILL.md exists in each skill
+        shell: pwsh
+        run: |
+          $missing = @()
+          if (Test-Path "skills") {
+            Get-ChildItem -Path "skills" -Directory | ForEach-Object {
+              $skillMd = Join-Path $_.FullName "SKILL.md"
+              if (-not (Test-Path -LiteralPath $skillMd)) {
+                $missing += "  ❌ Missing: skills/$($_.Name)/SKILL.md"
+              } else {
+                Write-Host "  ✅ $($_.Name)/SKILL.md"
+              }
+            }
+          } else {
+            Write-Host "  ℹ️  skills/ not found — skipped"
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "❌ SKILL.md missing in:"
+            $missing | ForEach-Object { Write-Host $_ }
+            exit 1
+          }
+          Write-Host "✅ All skills have SKILL.md"
+
+      # ── TASK 1.5: Code block language identifier check ────────
+      - name: Validate code blocks have language identifiers
+        run: |
+          set -euo pipefail
+          ISSUES=0
+          while IFS= read -r file; do
+            RESULT=$(awk '
+              /^```/{
+                if (in_block) { in_block=0; next }
+                if (/^```[a-zA-Z]/) { in_block=1; next }
+                print FILENAME ":" NR ": bare ``` (missing language identifier)"
+                in_block=1
+              }
+            ' "$file")
+            if [ -n "$RESULT" ]; then
+              echo "$RESULT"
+              ISSUES=$((ISSUES + 1))
+            fi
+          done < <(find skills/ -name "*.md" 2>/dev/null || true)
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "❌ $ISSUES file(s) have code blocks without language identifiers"
+            exit 1
+          fi
+          echo "✅ All code blocks have language identifiers"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "  odoo-ai Validation Complete"
+          echo "════════════════════════════════════════"
