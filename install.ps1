@@ -213,6 +213,33 @@ foreach ($script in $hookScripts) {
 
 Write-Host ""
 
+# ── 5c. CONFIGURE HOOKS IN SETTINGS.JSON ─────────────────────────────────────
+
+$settingsPath = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "settings.json")
+$hooksTplPath = [System.IO.Path]::Combine($PSScriptRoot, "config-templates", "settings-hooks.template.json")
+
+Write-Host "  Configuring Claude Code hooks..." -ForegroundColor Cyan
+
+$hooksTpl = Get-Content -Raw -LiteralPath $hooksTplPath | ConvertFrom-Json
+
+if (Test-Path -LiteralPath $settingsPath) {
+    $settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+} else {
+    $settings = [PSCustomObject]@{}
+    [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($settingsPath)) | Out-Null
+}
+
+if ($settings.PSObject.Properties['hooks']) {
+    Write-Host "  [~] Hooks already present in settings.json — skipped." -ForegroundColor DarkGray
+    Write-Host "      To update manually: config-templates/settings-hooks.template.json" -ForegroundColor DarkGray
+} else {
+    $settings | Add-Member -NotePropertyName 'hooks' -NotePropertyValue $hooksTpl.hooks
+    $settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+    Write-Host "  [+] Hooks configured in: $settingsPath" -ForegroundColor Green
+}
+
+Write-Host ""
+
 # ── 6. WRITE CONFIG ───────────────────────────────────────────────────────────
 
 if (-not [System.IO.File]::Exists($configDest)) {
@@ -246,9 +273,8 @@ Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Edit $configDest — set your name, Drive path, and team"
 Write-Host "  2. Open your AI agent in your Odoo project directory"
-Write-Host "  3. Add hooks to ~/.claude/settings.json (see config-templates/settings-hooks.template.json)"
-Write-Host "  4. Run: /engram-drive setup    → configure team memory sync"
-Write-Host "  5. Run: /sdd-init              → initialize Spec-Driven Development"
+Write-Host "  3. Run: /engram-drive setup    → configure team memory sync"
+Write-Host "  4. Run: /sdd-init              → initialize Spec-Driven Development"
 Write-Host ""
 Write-Host "  Documentation: https://github.com/Geraldow/odoo-ai" -ForegroundColor DarkGray
 Write-Host ""
