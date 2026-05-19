@@ -22,6 +22,27 @@ try {
         exit 1
     }
 
+    # Detectar directorio real de custom addons (el que Docker monta)
+    $composeContent = Get-Content 'docker-compose.yml' -Raw
+    $mountMatch = [regex]::Matches($composeContent, '(\./[\w/\-]+):/mnt/custom-addons')
+    if ($mountMatch.Count -gt 0) {
+        $customAddonsDir = $mountMatch[0].Groups[1].Value.TrimStart('./')
+        Write-Host "📦 Custom addons montado en Docker: ./$customAddonsDir" -ForegroundColor Cyan
+        $mountedPath = Join-Path $ProjectDir $customAddonsDir
+        $rootModules = Get-ChildItem $ProjectDir -Directory -Depth 0 |
+            Where-Object { Test-Path (Join-Path $_.FullName '__manifest__.py') }
+        $duplicates = $rootModules | Where-Object {
+            Test-Path (Join-Path $mountedPath $_.Name)
+        }
+        if ($duplicates) {
+            Write-Host "⚠️  Módulos con copia duplicada (raíz ≠ Docker):" -ForegroundColor Yellow
+            $duplicates | ForEach-Object {
+                Write-Host "   → Editar: ./$customAddonsDir/$($_.Name)/" -ForegroundColor Yellow
+                Write-Host "     Ignorar: ./$($_.Name)/ (no montado en Docker)" -ForegroundColor DarkGray
+            }
+        }
+    }
+
     # Leer db_name desde odoo.conf si existe
     $dbName = 'odoo'
     $confFile = 'etc/odoo.conf'

@@ -144,11 +144,10 @@ Then tell the user:
 
 ## /engram-drive sync — Sync Flow
 
-Run `scripts/sync-memories.ps1` via PowerShell:
+Run `engram-sync.ps1` via PowerShell:
 
 ```powershell
-$skillDir = "$env:USERPROFILE\.claude\skills\engram-drive"
-pwsh -NoProfile -NonInteractive -File "$skillDir\scripts\sync-memories.ps1"
+pwsh -NoProfile -NonInteractive -File "$env:USERPROFILE\.claude\scripts\engram-sync.ps1"
 ```
 
 Report a summary line per project:

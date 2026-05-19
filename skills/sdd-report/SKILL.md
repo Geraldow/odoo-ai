@@ -1,3 +1,13 @@
+---
+name: sdd-report
+description: Generate complete professional closure report after a development task finishes. Read-only, no code changes.
+license: MIT
+model: haiku
+metadata:
+  author: gentleman-programming
+  version: "1.0"
+---
+
 # sdd-report — Development Closure Report
 
 ## Purpose
