@@ -144,7 +144,8 @@ The installer will walk you through:
 3. **Community source** — clones `github.com/odoo/odoo` at the selected version if not already present (~1.5 GB shallow clone)
 4. **Enterprise source** — if you have an active Odoo subscription, you can link your existing Enterprise copy or clone it yourself
 5. **Skills installation** — copies all skills to `~/.claude/skills/`
-6. **Config generation** — creates `~/.claude/engram-sync-config.json` with your detected Odoo paths pre-filled
+6. **Hook scripts** — copies all hook scripts to `~/.claude/scripts/`
+7. **Config generation** — creates `~/.claude/engram-sync-config.json` with your detected Odoo paths pre-filled
 
 ### Keeping plugins up to date
 
@@ -158,12 +159,33 @@ Then re-run `install.ps1` (or copy the updated plugins manually) to apply change
 
 ### First run
 
-Open your AI agent in your Odoo project directory, then:
+**Step 1 — Add hooks to your settings.json**
+
+Copy the hook block from `config-templates/settings-hooks.template.json` into `~/.claude/settings.json` under the `"hooks"` key. These hooks activate automatic Odoo project detection, SDD task-size enforcement, and engram memory sync on every session.
+
+**Step 2 — Open your AI agent in your Odoo project directory, then:**
 
 ```
 /engram-drive setup     → detect environment, configure team, create Drive folders
 /sdd-init               → initialize Spec-Driven Development for this project
 ```
+
+---
+
+## Hooks
+
+The `scripts/` directory contains Claude Code hooks that run automatically during sessions. They are installed to `~/.claude/scripts/` by `install.ps1` and activated by adding the block from `config-templates/settings-hooks.template.json` to your `~/.claude/settings.json`.
+
+| Script | Hook event | What it does |
+|---|---|---|
+| `engram-detect.py` | `SessionStart` | Detects which engram project is active based on CWD; injects `project=` reminder into context |
+| `odoo-detect.py` | `SessionStart` | Detects `__manifest__.py` in CWD; injects mandatory odoo-development skill loading sequence |
+| `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open |
+| `sdd_task_check.py` | `UserPromptSubmit` + `PostCompact` | Injects SDD task-size classification reminder before every prompt |
+| `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to run `/sdd-ff` for Moderado/Complejo tasks |
+| `engram-project-track.py` | `PostToolUse` | Tracks active engram project as files are edited; injects `project=` update on context switch |
+| `engram-session-end.ps1` | `Stop` | Exports your memories to Google Drive + imports teammates' latest at session close |
+| `engram-sync.ps1` | Manual / `Stop` | Smart sync — detects single-project vs multi-project workspace and syncs accordingly |
 
 ---
 
@@ -363,6 +385,16 @@ odoo-ai/
 ├── assets/
 │   └── odoo-ai-banner.png
 ├── install.ps1                    ← run this first
+├── update.ps1                     ← pull latest external plugins
+├── scripts/                       ← Claude Code hook scripts (installed to ~/.claude/scripts/)
+│   ├── engram-detect.py           ← SessionStart: detect active engram project
+│   ├── odoo-detect.py             ← SessionStart: detect Odoo project, load skill
+│   ├── sdd_task_check.py          ← UserPromptSubmit + PostCompact: SDD size guard
+│   ├── sdd_odoo_check.py          ← PreToolUse: SDD compliance on Odoo file edits
+│   ├── engram-project-track.py    ← PostToolUse: track active project on file edit
+│   ├── engram-session-start.ps1   ← SessionStart + PostCompact: import teammate memories
+│   ├── engram-session-end.ps1     ← Stop: export + import memories at session close
+│   └── engram-sync.ps1            ← Manual sync: single-project or multi-project
 ├── skills/
 │   ├── engram-drive/              ← team memory sync via Google Drive
 │   ├── odoo-development/          ← Odoo development hub (v14–19)
@@ -377,13 +409,14 @@ odoo-ai/
 │   ├── sdd-ff/                    ← SDD: fast-forward (full pipeline)
 │   ├── sdd-apply/                 ← SDD: implementation
 │   ├── sdd-verify/                ← SDD: verification
-│   ├── sdd-report/                ← SDD: progress report
+│   ├── sdd-report/                ← SDD: closure report
 │   ├── sdd-continue/              ← SDD: resume interrupted pipeline
 │   ├── sdd-archive/               ← SDD: archive artifacts
 │   ├── skill-evolver/             ← pattern detection and codification
 │   └── _shared/                   ← shared utilities across all skills
 ├── config-templates/
-│   └── engram-sync-config.template.json
+│   ├── engram-sync-config.template.json   ← template for ~/.claude/engram-sync-config.json
+│   └── settings-hooks.template.json       ← hooks block to add to ~/.claude/settings.json
 ├── LICENSE
 └── README.md
 ```
