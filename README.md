@@ -5,7 +5,7 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-714B67?style=flat-square)
 ![Odoo](https://img.shields.io/badge/Odoo-14--19-714B67?style=flat-square&logo=odoo)
 ![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-5391FE?style=flat-square&logo=powershell)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-a855f7?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Windows-a855f7?style=flat-square)
 
 **One framework. Any agent. Any Odoo version.**
 
@@ -135,7 +135,7 @@ Before running the installer, make sure you have the following:
 | [Claude Code](https://claude.ai/code) or any AI agent | The runtime that loads and executes the skills |
 | [engram plugin](https://github.com/Gentleman-Programming/engram): `claude plugin install engram` | Persistent memory layer — stores and retrieves observations across sessions |
 | [Google Drive for Desktop](https://drive.google.com/drive/download) | Mounts your Drive as a local folder — required for team memory sync via `engram-drive` |
-| [PowerShell 7+](https://github.com/PowerShell/PowerShell/releases) (`pwsh`) | The cross-platform shell used by all installer and sync scripts. **Not** the legacy Windows PowerShell 5.x that ships with Windows — version 7 or higher is required. Windows 11 users can install it from the Microsoft Store. |
+| [PowerShell 7+](https://github.com/PowerShell/PowerShell/releases) (`pwsh`) | Required to run the installer and sync scripts. Windows 11 users can install it from the Microsoft Store. |
 | [git](https://git-scm.com) | Required to clone this repo and to auto-clone Odoo Community source |
 | Odoo source code (versions 14–19) | Used by `odoo-development` for API lookups, view references, and module analysis |
 
