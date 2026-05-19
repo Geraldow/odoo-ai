@@ -1,9 +1,10 @@
 {
-  "_readme": "Copy this file to ~/.claude/engram-sync-config.json and fill in your details. Then run /engram-drive setup to create the Drive folder structure.",
+  "_readme": "install.ps1 fills 'base' and 'odoo' automatically. Edit 'owner', 'team', and 'projects', then run /engram-drive setup.",
 
   "owner": "YourFirstName",
 
-  "base": "G:\\My Drive\\Engram\\engram-sync",
+  "_base_note": "Filled automatically by install.ps1 — points to My Drive/Engram/engram-sync/ on your Google Drive. Change only if you want a different folder structure.",
+  "base": "",
 
   "projects": [],
 
@@ -17,9 +18,9 @@
   ],
 
   "odoo": {
-    "_note": "Set odoo_version to your Odoo version (e.g. 18, 17). Set enterprise_path to your local Enterprise source folder. Leave enterprise_path empty for Community-only setups.",
+    "_note": "Filled automatically by install.ps1. odoo_version and community_path are detected from your existing projects. Leave enterprise_path empty for Community-only setups.",
     "odoo_version": 18,
-    "enterprise_path": "C:\\Development\\Odoo\\Source\\enterprise",
-    "community_path": "C:\\Development\\Odoo\\Community\\18"
+    "enterprise_path": "",
+    "community_path": ""
   }
 }
