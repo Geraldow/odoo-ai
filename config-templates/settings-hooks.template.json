@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
+            "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
             "timeout": 60,
             "async": true
           }
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-end.ps1\"",
+            "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-end.ps1\"",
             "timeout": 60
           }
         ]
@@ -92,7 +92,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
+            "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
             "timeout": 60,
             "async": true
           }
