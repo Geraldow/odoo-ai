@@ -73,6 +73,7 @@ Detectar necesidad del usuario usando tabla abajo → cargar plugin hijo
 - **Branch Safety PRIMERO** — siempre ejecutar branch-safety-check.ps1
 - **Odoo version SEGUNDO** — ejecutar odoo-version-detect.ps1 (obligatorio)
 - **Plugin correcto TERCERO** — seleccionar por contexto
+- **Enterprise source CUARTO (sdd-design)** — para cada API de Odoo en el diseño (manifest key, hook signature, decorador, campo, XML), grep `C:\Development\Odoo\Source\enterprise\` para el formato exacto. Nunca asumir — siempre verificar.
 - **No inline code** — siempre de snippets/templates de plugins
 - **OCA standards** — aplicar siempre para cualquier código nuevo
 
