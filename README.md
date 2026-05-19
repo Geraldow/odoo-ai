@@ -56,6 +56,15 @@ flowchart TB
 
     dev -->|"prompt / task"| agent
 
+    subgraph hooks ["  Hooks Layer (automatic)  "]
+        direction LR
+        hd["🔍 project detection\nodoo-detect · engram-detect"]
+        hs["📋 SDD enforcement\ntask-size · odoo-guard · project-track"]
+        hm["🔄 memory sync\nsession-start · session-end"]
+    end
+
+    agent -->|"session events"| hooks
+
     subgraph skills ["  Skills Layer  "]
         direction LR
         sdd["📐 SDD\n13 phases"]
@@ -63,6 +72,7 @@ flowchart TB
         ev["⚡ skill-evolver"]
     end
 
+    hooks -->|"context injection"| agent
     agent --> skills
 
     subgraph memory ["  Memory Layer  "]
@@ -71,7 +81,7 @@ flowchart TB
         cloud["☁️ engram-drive\nGoogle Drive sync"]
     end
 
-    agent --> memory
+    hm --> memory
     local <-->|"export / import"| cloud
 
     subgraph team ["  Team  "]
@@ -96,13 +106,16 @@ flowchart TB
     classDef teal fill:#22d3ee,stroke:#0ea5e9,stroke-width:2px,color:#0d1117
     classDef dark fill:#1e1e2e,stroke:#714B67,stroke-width:2px,color:#fff
     classDef person fill:#0d1117,stroke:#a855f7,stroke-width:2px,color:#a855f7
+    classDef hook fill:#1a2e1a,stroke:#22c55e,stroke-width:2px,color:#fff
 
     class dev,a,b,c person
     class agent violet
     class sdd,odo,ev purple
     class local,cloud teal
     class comm,ent dark
+    class hd,hs,hm hook
 
+    style hooks fill:#0d2a0d,stroke:#22c55e,stroke-width:1px,color:#fff
     style skills fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#fff
     style memory fill:#0d2a2a,stroke:#22d3ee,stroke-width:1px,color:#fff
     style team fill:#1a1a2e,stroke:#a855f7,stroke-width:1px,color:#fff
@@ -233,12 +246,15 @@ flowchart LR
     subgraph machine ["  Your Machine  "]
         direction TB
         agent(["🤖 AI Agent"])
-        hook["⚡ Stop Hook\nengram-sync.ps1"]
+        hookStart["⚡ SessionStart Hook\nengram-session-start.ps1"]
+        hookEnd["⚡ Stop Hook\nengram-session-end.ps1"]
         db[("🧠 engram\nlocal SQLite")]
         detect["📂 Workspace Detection\nsingle-project → sync one\nmulti-project → sync all"]
 
-        agent -->|"session ends"| hook
-        hook --> detect
+        agent -->|"session starts"| hookStart
+        agent -->|"session ends"| hookEnd
+        hookStart -->|"import only"| detect
+        hookEnd --> detect
         detect <-->|"read / write"| db
     end
 
@@ -263,10 +279,10 @@ flowchart LR
         carol(["👤 Carol"])
     end
 
-    detect -->|"export — write only\nto your folder"| a1
-    detect -->|"export"| a2
-    detect -->|"import — read only"| b1
-    detect -->|"import — read only"| c1
+    hookStart -->|"import teammates"| b1
+    hookStart -->|"import teammates"| c1
+    hookEnd -->|"export — write only\nto your folder"| a1
+    hookEnd -->|"export"| a2
     b1 <-->|"Bob syncs"| bob
     c1 <-->|"Carol syncs"| carol
 
@@ -275,10 +291,12 @@ flowchart LR
     classDef purple  fill:#714B67,stroke:#a855f7,stroke-width:2px,color:#fff
     classDef violet  fill:#a855f7,stroke:#714B67,stroke-width:2px,color:#fff
     classDef folder  fill:#1e1e2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
+    classDef hook    fill:#1a2e1a,stroke:#22c55e,stroke-width:2px,color:#fff
 
     class agent,bob,carol person
     class db teal
-    class hook,detect purple
+    class hookStart,hookEnd hook
+    class detect purple
     class a1,a2 violet
     class b1,b2,c1 folder
 
