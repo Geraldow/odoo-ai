@@ -19,8 +19,9 @@ All scripts live inside this skill folder:
 
 | Script | Purpose |
 |---|---|
-| `scripts/detect-environment.ps1` | Scan for Google Drive, Odoo project repos, git contributors |
+| `scripts/detect-environment.ps1` | Scan for Google Drive, Odoo project repos, git contributors. Also exports `Resolve-DrivePath` (dot-source with `-RunDetection:$false`) |
 | `scripts/sync-memories.ps1` | Export your memories + import teammates' memories |
+| `scripts/new-project.ps1` | Onboard a new project: Drive folders + project.json + SECURITY.md + codesearch |
 
 Config lives outside the skill at: `~/.claude/engram-sync-config.json`  
 Template: `config-template.json` (copy and fill in before first use)
@@ -45,11 +46,12 @@ New project = new folder. New teammate = new subfolder. No config change needed.
 ## Available Commands
 
 ```
-/engram-drive setup          → interactive onboarding: detect environment, assign roles, create folders
-/engram-drive sync           → export your memories + import all teammates (all projects)
-/engram-drive sync <project> → sync only one project
-/engram-drive import <project> → import only from teammates (no export)
-/engram-drive status         → show config summary and Drive folder state
+/engram-drive setup               → interactive onboarding: detect environment, assign roles, create folders
+/engram-drive setup <project>     → onboard a new project (alias for new-project.ps1)
+/engram-drive sync                → export your memories + import all teammates (all projects)
+/engram-drive sync <project>      → sync only one project
+/engram-drive import <project>    → import only from teammates (no export)
+/engram-drive status              → show config summary and Drive folder state
 ```
 
 ---
@@ -64,7 +66,7 @@ Run the detection script and show results:
 
 ```powershell
 $skillDir = "$env:USERPROFILE\.claude\skills\engram-drive"
-powershell -NoProfile -File "$skillDir\scripts\detect-environment.ps1" | ConvertFrom-Json
+pwsh -NoProfile -File "$skillDir\scripts\detect-environment.ps1" | ConvertFrom-Json
 ```
 
 Present findings to the user:
@@ -147,7 +149,7 @@ Then tell the user:
 Run `engram-sync.ps1` via PowerShell:
 
 ```powershell
-powershell -NoProfile -NonInteractive -File "$env:USERPROFILE\.claude\scripts\engram-sync.ps1"
+pwsh -NoProfile -NonInteractive -File "$env:USERPROFILE\.claude\scripts\engram-sync.ps1"
 ```
 
 Report a summary line per project:

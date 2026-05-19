@@ -224,6 +224,53 @@ C:\Development\Odoo\
 
 ---
 
+## Code search (MCP)
+
+`codesearch` is a local MCP server that enables semantic + keyword search across all your Odoo repos without streaming file contents through the AI context window — cutting token usage for code exploration by ~94%.
+
+### Installation
+
+1. Download the latest release from [flupkede/codesearch](https://github.com/flupkede/codesearch/releases) and extract `codesearch.exe` to `C:\Tools\codesearch\`
+2. Add it to PATH, or reference the full path in your MCP config
+3. Register your repos:
+
+```powershell
+# Register each project
+codesearch index add --alias intiflow --store "C:\Development\Odoo\18\intiflow\.codesearch.db" "C:\Development\Odoo\18\intiflow"
+codesearch index add --alias enterprise --store "C:\Development\Odoo\18\Source\enterprise\.codesearch.db" "C:\Development\Odoo\18\Source\enterprise"
+
+# Initial index build (run once per repo, can take a few minutes for large repos)
+codesearch index "C:\Development\Odoo\18\intiflow" --force
+```
+
+4. Add the MCP server to `~/.claude.json`:
+
+```json
+"mcpServers": {
+  "codesearch": {
+    "command": "C:\\Tools\\codesearch\\codesearch.exe",
+    "args": ["mcp", "--mode", "client"]
+  }
+}
+```
+
+5. Restart Claude Code — codesearch tools will appear automatically.
+
+### Repo registry
+
+Registered repos are stored at `~/.codesearch/repos.json`. Add new repos manually or let `new-project.ps1` handle registration when you pass `-RepoPath`.
+
+### When to use it
+
+| Task | Tool |
+|------|------|
+| Find where a field is defined across all modules | `codesearch search "field_name"` |
+| Look up how Enterprise implements a specific view | `codesearch search "sale.order form" --repo enterprise` |
+| Check if a pattern exists in your project | `codesearch search "compute_amount" --repo intiflow` |
+| Read a specific file you already know | `Read` tool (direct is faster for known paths) |
+
+---
+
 ## Team memory sync
 
 `engram-drive` uses Google Drive as a conflict-free sync backend. Each team member writes **exclusively** to their own subfolder and imports (read-only) from teammates. No server required. No manifest conflicts.
@@ -304,6 +351,18 @@ flowchart LR
     style pa      fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
     style pb      fill:#2a1a2e,stroke:#714B67,stroke-width:1px,color:#cdd6f4
 ```
+
+**To onboard a new project:**
+
+```powershell
+# Creates Drive folders, project.json, and SECURITY.md in one step
+powershell -File skills/engram-drive/scripts/new-project.ps1 -ProjectName "my-project" -Members "Alice,Bob"
+
+# Or from inside Claude Code:
+/engram-drive setup my-project
+```
+
+Each project gets a `project.json` in its Drive folder that controls who syncs and what topics are shared.
 
 **To onboard a new teammate:**
 

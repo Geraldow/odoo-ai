@@ -1,26 +1,24 @@
 {
-  "_readme": "install.ps1 fills 'base' and 'odoo' automatically. Edit 'owner', 'team', and 'projects', then run /engram-drive setup.",
+  "_readme": "Copy this to ~/.claude/engram-sync-config.json and fill in your details. install.ps1 fills workspace_path automatically.",
 
   "owner": "YourFirstName",
 
-  "_base_note": "Filled automatically by install.ps1 — points to My Drive/Engram/engram-sync/ on your Google Drive. Change only if you want a different folder structure.",
-  "base": "",
+  "_base_relative_note": "Path inside My Drive where the engram-sync folder lives. Change only if you used a different folder structure during /engram-drive setup.",
+  "base_relative": "Engram/engram-sync",
 
-  "projects": [],
+  "_workspace_path_note": "Your local Odoo development root. install.ps1 auto-detects this. Each team member sets their own path — never hardcoded.",
+  "workspace_path": "",
 
-  "team": [
+  "team_roster": [
     {
       "name": "YourFirstName",
-      "display": "Your Full Name",
       "email": "your@email.com",
       "role": "developer"
     }
   ],
 
-  "odoo": {
-    "_note": "Filled automatically by install.ps1. odoo_version and community_path are detected from your existing projects. Leave enterprise_path empty for Community-only setups.",
-    "odoo_version": 18,
-    "enterprise_path": "",
-    "community_path": ""
+  "defaults": {
+    "codesearch": true,
+    "auto_sync": true
   }
 }
