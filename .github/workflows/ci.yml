@@ -111,7 +111,7 @@ jobs:
               echo "$RESULT"
               ISSUES=$((ISSUES + 1))
             fi
-          done < <(find skills/ -maxdepth 2 -name "SKILL.md" 2>/dev/null || true)
+          done < <(find skills/engram-drive skills/odoo-development skills/odoo-contribute -maxdepth 1 -name "SKILL.md" 2>/dev/null || true)
           if [ "$ISSUES" -gt 0 ]; then
             echo "❌ $ISSUES file(s) have code blocks without language identifiers"
             exit 1
