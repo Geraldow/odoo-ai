@@ -2,10 +2,45 @@
 # Scans the system for: Google Drive mount point, Odoo project repos,
 # and git contributors per project.
 # Output: JSON to stdout — consumed by /engram-drive setup
+#
+# IMPORTABLE: dot-source this file to use Resolve-DrivePath in other scripts:
+#   . "$PSScriptRoot\detect-environment.ps1" -RunDetection $false
 
 param(
-    [string]$WorkspacePath = ""
+    [string]$WorkspacePath = "",
+    [bool]$RunDetection = $true
 )
+
+# ── SHARED UTILITY: Resolve-DrivePath ────────────────────────────────────────
+# Converts base_relative (e.g. "[1] Geraldo/.../engram-sync") to absolute path.
+# Windows: scans drive letters for "My Drive". macOS: ~/Library/CloudStorage.
+# Returns $null if Google Drive is not mounted.
+
+function Resolve-DrivePath {
+    param([string]$BaseRelative)
+
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        $myDrivePath = $null
+        foreach ($letter in 65..90 | ForEach-Object { [char]$_ }) {
+            $candidate = "${letter}:\My Drive"
+            if ([System.IO.Directory]::Exists($candidate)) {
+                $myDrivePath = $candidate
+                break
+            }
+        }
+        if (-not $myDrivePath) { return $null }
+        return [System.IO.Path]::Combine($myDrivePath, $BaseRelative)
+    } else {
+        $cloudStorage = [System.IO.Path]::Combine($env:HOME, "Library", "CloudStorage")
+        try {
+            $gdDirs = [System.IO.Directory]::GetDirectories($cloudStorage, "GoogleDrive-*")
+        } catch { return $null }
+        if (-not $gdDirs -or $gdDirs.Count -eq 0) { return $null }
+        return [System.IO.Path]::Combine($gdDirs[0], "My Drive", $BaseRelative)
+    }
+}
+
+if (-not $RunDetection) { return }
 
 $result = @{
     drive_found   = $false
@@ -54,7 +89,20 @@ if ($driveRoot) {
     $result.drive_found  = $true
     $result.drive_letter = $driveRoot.Substring(0, 1)
     $result.drive_root   = $driveRoot
-    $result.sync_base    = [System.IO.Path]::Combine($driveBase, "Engram", "engram-sync")
+
+    # Prefer base_relative from config; fall back to legacy default
+    $configPath = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "engram-sync-config.json")
+    if ([System.IO.File]::Exists($configPath)) {
+        try {
+            $cfg = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+            $resolved = Resolve-DrivePath $cfg.base_relative
+            $result.sync_base = if ($resolved) { $resolved } else { [System.IO.Path]::Combine($driveBase, "Engram", "engram-sync") }
+        } catch {
+            $result.sync_base = [System.IO.Path]::Combine($driveBase, "Engram", "engram-sync")
+        }
+    } else {
+        $result.sync_base = [System.IO.Path]::Combine($driveBase, "Engram", "engram-sync")
+    }
 } else {
     $result.errors += "Google Drive not found on any drive letter (A: through Z: scanned)."
 }
@@ -66,12 +114,21 @@ $searchRoots = @()
 if ($WorkspacePath -and [System.IO.Directory]::Exists($WorkspacePath)) {
     $searchRoots += $WorkspacePath
 } else {
+    # Prefer workspace_path from config; fallback to env var or SystemDrive pattern
+    $cfgWs = $null
+    $configPath2 = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "engram-sync-config.json")
+    if ([System.IO.File]::Exists($configPath2)) {
+        try { $cfgWs = (Get-Content -LiteralPath $configPath2 -Raw | ConvertFrom-Json).workspace_path } catch {}
+    }
+    $sysDev = [System.IO.Path]::Combine($env:SystemDrive, "Development", "Odoo", "18")
     $candidates = @(
-        "C:\Development\Odoo\Community\18\Projects\Work",
-        "C:\Development\Odoo",
-        "$env:USERPROFILE\Projects",
-        "$env:USERPROFILE\Development"
-    )
+        $(if ($env:ODOO_WORKSPACE) { $env:ODOO_WORKSPACE } else { $null }),
+        $cfgWs,
+        $sysDev,
+        [System.IO.Path]::Combine($env:SystemDrive, "Development", "Odoo"),
+        [System.IO.Path]::Combine($env:USERPROFILE, "Projects"),
+        [System.IO.Path]::Combine($env:USERPROFILE, "Development")
+    ) | Where-Object { $_ }
     foreach ($c in $candidates) {
         if ([System.IO.Directory]::Exists($c)) { $searchRoots += $c; break }
     }

@@ -1,0 +1,10 @@
+{
+  "project": "{{PROJECT_NAME}}",
+  "type": "{{TYPE}}",
+  "created": "{{DATE}}",
+  "members": {{MEMBERS_JSON}},
+  "restricted_topics": [],
+  "auto_sync": true,
+  "codesearch": {{CODESEARCH_BOOL}},
+  "notes": ""
+}
