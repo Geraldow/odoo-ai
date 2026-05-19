@@ -1,6 +1,6 @@
 # update.ps1
 # Pulls the latest version of each external plugin from its original GitHub repo.
-# Run from the odoo-ai directory: pwsh -File update.ps1
+# Run from the odoo-ai directory: powershell -File update.ps1
 #
 # External plugins managed here:
 #   ahmed-lakosha/odoo-plugins

@@ -1,7 +1,7 @@
 # install.ps1
 # Installs odoo-ai skills, detects Odoo version, clones Community source,
 # and configures Enterprise path.
-# Run once per machine: pwsh -File install.ps1
+# Run once per machine: powershell -File install.ps1
 
 $ErrorActionPreference = "Continue"
 
@@ -32,7 +32,6 @@ function Check($label, $ok, $hint) {
 Write-Host "  Checking prerequisites..." -ForegroundColor Cyan
 
 Check "Claude Code"   (Get-Command claude -ErrorAction SilentlyContinue) "Install from https://claude.ai/code"
-Check "PowerShell 7+" ($PSVersionTable.PSVersion.Major -ge 7)            "Install from https://github.com/PowerShell/PowerShell/releases"
 Check "engram plugin" (Get-Command engram -ErrorAction SilentlyContinue) "Run: claude plugin install engram"
 Check "git"           (Get-Command git    -ErrorAction SilentlyContinue) "Install from https://git-scm.com"
 

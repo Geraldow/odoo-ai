@@ -4,7 +4,6 @@
 
 ![MIT License](https://img.shields.io/badge/license-MIT-714B67?style=flat-square)
 ![Odoo](https://img.shields.io/badge/Odoo-14--19-714B67?style=flat-square&logo=odoo)
-![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-5391FE?style=flat-square&logo=powershell)
 ![Platform](https://img.shields.io/badge/platform-Windows-a855f7?style=flat-square)
 
 **One framework. Any agent. Any Odoo version.**
@@ -135,7 +134,6 @@ Before running the installer, make sure you have the following:
 | [Claude Code](https://claude.ai/code) or any AI agent | The runtime that loads and executes the skills |
 | [engram plugin](https://github.com/Gentleman-Programming/engram): `claude plugin install engram` | Persistent memory layer — stores and retrieves observations across sessions |
 | [Google Drive for Desktop](https://drive.google.com/drive/download) | Mounts your Drive as a local folder — required for team memory sync via `engram-drive` |
-| [PowerShell 7+](https://github.com/PowerShell/PowerShell/releases) (`pwsh`) | Required to run the installer and sync scripts. Windows 11 users can install it from the Microsoft Store. |
 | [git](https://git-scm.com) | Required to clone this repo and to auto-clone Odoo Community source |
 | Odoo source code (versions 14–19) | Used by `odoo-development` for API lookups, view references, and module analysis |
 
@@ -147,7 +145,7 @@ git clone https://github.com/Geraldow/odoo-ai.git
 
 # 2. Run the installer
 cd odoo-ai
-pwsh -File install.ps1
+powershell -File install.ps1
 ```
 
 The installer will walk you through:
@@ -166,7 +164,7 @@ The installer will walk you through:
 To pull the latest version of all external plugins from their original repositories:
 
 ```powershell
-pwsh -File update.ps1
+powershell -File update.ps1
 ```
 
 Then re-run `install.ps1` (or copy the updated plugins manually) to apply changes to your skills directory.
@@ -310,7 +308,7 @@ flowchart LR
 **To onboard a new teammate:**
 
 1. Share the project subfolder in Google Drive: right-click → Share → add their email as **Editor**
-2. They clone this repo and run `pwsh -File install.ps1`
+2. They clone this repo and run `powershell -File install.ps1`
 3. They open their AI agent and run `/engram-drive setup`
 4. Memory sync begins automatically from that point forward
 

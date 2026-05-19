@@ -64,7 +64,7 @@ Run the detection script and show results:
 
 ```powershell
 $skillDir = "$env:USERPROFILE\.claude\skills\engram-drive"
-pwsh -NoProfile -File "$skillDir\scripts\detect-environment.ps1" | ConvertFrom-Json
+powershell -NoProfile -File "$skillDir\scripts\detect-environment.ps1" | ConvertFrom-Json
 ```
 
 Present findings to the user:
@@ -147,7 +147,7 @@ Then tell the user:
 Run `engram-sync.ps1` via PowerShell:
 
 ```powershell
-pwsh -NoProfile -NonInteractive -File "$env:USERPROFILE\.claude\scripts\engram-sync.ps1"
+powershell -NoProfile -NonInteractive -File "$env:USERPROFILE\.claude\scripts\engram-sync.ps1"
 ```
 
 Report a summary line per project:
