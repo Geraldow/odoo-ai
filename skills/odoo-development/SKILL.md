@@ -73,9 +73,12 @@ Detectar necesidad del usuario usando tabla abajo → cargar plugin hijo
 - **Branch Safety PRIMERO** — siempre ejecutar branch-safety-check.ps1
 - **Odoo version SEGUNDO** — ejecutar odoo-version-detect.ps1 (obligatorio)
 - **Plugin correcto TERCERO** — seleccionar por contexto
-- **Enterprise source CUARTO (sdd-design)** — para cada API de Odoo en el diseño (manifest key, hook signature, decorador, campo, XML), grep `C:\Development\Odoo\Source\enterprise\` para el formato exacto. Nunca asumir — siempre verificar.
+- **Enterprise source CUARTO (sdd-design)** — para cada API de Odoo en el diseño (manifest key, hook signature, decorador, campo, XML), usar el **codesearch MCP search tool** con `repo: "enterprise"` para encontrar el formato exacto. Nunca asumir — siempre verificar. Source: `C:\Development\Odoo\18\Source\enterprise\` (43.931 chunks indexados).
 - **No inline code** — siempre de snippets/templates de plugins
 - **OCA standards** — aplicar siempre para cualquier código nuevo
+
+> **Búsquedas en Enterprise source**: **codesearch MCP primero** → Grep acotado al módulo → Read archivo específico.
+> El codesearch reduce ~94% el consumo de tokens versus Grep directo sobre 677 módulos.
 
 ---
 
