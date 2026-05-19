@@ -240,10 +240,46 @@ if ($settings.PSObject.Properties['hooks']) {
 
 Write-Host ""
 
+# ── 5d. DETECT GOOGLE DRIVE BASE PATH ────────────────────────────────────────
+
+Write-Host "  Detecting Google Drive path..." -ForegroundColor Cyan
+
+$detectedDriveBase = ""
+foreach ($letter in 65..90 | ForEach-Object { [char]$_ }) {
+    $root = "${letter}:\"
+    if (-not [System.IO.Directory]::Exists($root)) { continue }
+
+    $myDrive = [System.IO.Path]::Combine($root, "My Drive")
+    if ([System.IO.Directory]::Exists($myDrive)) {
+        $detectedDriveBase = [System.IO.Path]::Combine($myDrive, "Engram", "engram-sync")
+        Write-Host "  [OK] Google Drive found at ${letter}: → $detectedDriveBase" -ForegroundColor Green
+        break
+    }
+
+    # Legacy Google Backup and Sync
+    $legacyRoot = [System.IO.Path]::Combine($root, "Google Drive")
+    if ([System.IO.Directory]::Exists($legacyRoot)) {
+        $detectedDriveBase = [System.IO.Path]::Combine($legacyRoot, "Engram", "engram-sync")
+        Write-Host "  [OK] Google Drive (legacy) found at ${letter}: → $detectedDriveBase" -ForegroundColor Green
+        break
+    }
+}
+
+if (-not $detectedDriveBase) {
+    Write-Host "  [~~] Google Drive not detected — set 'base' manually in the config after install." -ForegroundColor Yellow
+}
+
+Write-Host ""
+
 # ── 6. WRITE CONFIG ───────────────────────────────────────────────────────────
 
 if (-not [System.IO.File]::Exists($configDest)) {
     $template = Get-Content -Raw $configSrc | ConvertFrom-Json
+
+    # Inject detected Google Drive base path
+    if ($detectedDriveBase) {
+        $template.base = $detectedDriveBase
+    }
 
     # Inject detected Odoo paths
     $template.odoo.odoo_version    = [int]$odooVersion
@@ -253,7 +289,7 @@ if (-not [System.IO.File]::Exists($configDest)) {
     $template | ConvertTo-Json -Depth 5 | Set-Content -Path $configDest -Encoding UTF8
 
     Write-Host "  [+] Config created at: $configDest" -ForegroundColor Green
-    Write-Host "      Edit it with your name, Drive path, and team members." -ForegroundColor DarkGray
+    Write-Host "      Edit 'owner', 'team', and 'projects' — then run /engram-drive setup." -ForegroundColor DarkGray
 } else {
     Write-Host "  [~] Config already exists — skipped: $configDest" -ForegroundColor DarkGray
 }
