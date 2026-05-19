@@ -31,20 +31,59 @@ function Check($label, $ok, $hint) {
 
 Write-Host "  Checking prerequisites..." -ForegroundColor Cyan
 
-Check "Claude Code"   (Get-Command claude -ErrorAction SilentlyContinue) "Install from https://claude.ai/code"
-Check "engram plugin" (Get-Command engram -ErrorAction SilentlyContinue) "Run: claude plugin install engram"
-Check "git"           (Get-Command git    -ErrorAction SilentlyContinue) "Install from https://git-scm.com"
+Check "Claude Code" (Get-Command claude -ErrorAction SilentlyContinue) "Install from https://claude.ai/code"
+Check "git"         (Get-Command git    -ErrorAction SilentlyContinue) "Install from https://git-scm.com"
 
 $gdRunning = Get-Process -Name "GoogleDriveFS","googledrivesync" -ErrorAction SilentlyContinue
-Check "Google Drive"  ($null -ne $gdRunning)                             "Install from https://drive.google.com/drive/download (needed for engram-drive)"
+Check "Google Drive" ($null -ne $gdRunning) "Install from https://drive.google.com/drive/download (needed for engram-drive)"
 
 Write-Host ""
 
-if ($checks.failed -gt 0) {
-    Write-Host "  $($checks.failed) prerequisite(s) missing — install them before continuing." -ForegroundColor Yellow
-    Write-Host "  You can re-run this script after fixing them." -ForegroundColor DarkGray
-    Write-Host ""
+# ── AUTO-INSTALL: engram ──────────────────────────────────────────────────────
+
+if (-not (Get-Command engram -ErrorAction SilentlyContinue)) {
+    Write-Host "  [~~] engram not found — installing via claude plugin..." -ForegroundColor Yellow
+    & claude plugin install engram 2>&1 | Out-Null
+    if (Get-Command engram -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] engram installed" -ForegroundColor Green
+    } else {
+        Write-Host "  [!!] engram install may need a terminal restart. Run: claude plugin install engram" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  [OK] engram" -ForegroundColor Green
 }
+
+# ── AUTO-INSTALL: codesearch ──────────────────────────────────────────────────
+
+$csExe = [System.IO.Path]::Combine($env:SystemDrive, "Tools", "codesearch", "codesearch.exe")
+
+if (-not (Test-Path -LiteralPath $csExe) -and -not (Get-Command codesearch -ErrorAction SilentlyContinue)) {
+    Write-Host "  [~~] codesearch not found — downloading latest release..." -ForegroundColor Yellow
+    try {
+        $release  = Invoke-RestMethod -Uri "https://api.github.com/repos/flupkede/codesearch/releases/latest"
+        $asset    = $release.assets | Where-Object { $_.name -match "windows.*x86_64|x86_64.*windows" } | Select-Object -First 1
+        if (-not $asset) { $asset = $release.assets | Where-Object { $_.name -match "\.exe$" } | Select-Object -First 1 }
+
+        if ($asset) {
+            $csDir = [System.IO.Path]::GetDirectoryName($csExe)
+            [System.IO.Directory]::CreateDirectory($csDir) | Out-Null
+            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $csExe -UseBasicParsing
+            Write-Host "  [OK] codesearch installed: $csExe" -ForegroundColor Green
+            Write-Host "  [~~] Add to PATH: $csDir" -ForegroundColor DarkGray
+            [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$csDir", "User")
+            $env:PATH += ";$csDir"
+        } else {
+            Write-Host "  [!!] No Windows binary found in release — install manually: https://github.com/flupkede/codesearch/releases" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  [!!] Download failed: $_" -ForegroundColor Yellow
+        Write-Host "       Install manually: https://github.com/flupkede/codesearch/releases" -ForegroundColor DarkGray
+    }
+} else {
+    Write-Host "  [OK] codesearch" -ForegroundColor Green
+}
+
+Write-Host ""
 
 # ── 2. DETECT ODOO VERSION ────────────────────────────────────────────────────
 
@@ -54,11 +93,11 @@ $detectedVersion = $null
 
 # Scan common project roots for __manifest__.py and read 'version' field
 $searchRoots = @(
-    "C:\Development\Odoo\Community",
-    "C:\Development\Odoo\Enterprise",
+    [System.IO.Path]::Combine($env:SystemDrive, "Development", "Odoo", "18"),
+    [System.IO.Path]::Combine($env:SystemDrive, "Development", "Odoo", "17"),
+    [System.IO.Path]::Combine($env:SystemDrive, "Development", "Odoo"),
     "$env:USERPROFILE\Projects",
-    "$env:USERPROFILE\Development",
-    "C:\odoo"
+    "$env:USERPROFILE\Development"
 )
 
 foreach ($root in $searchRoots) {
@@ -275,20 +314,13 @@ Write-Host ""
 if (-not [System.IO.File]::Exists($configDest)) {
     $template = Get-Content -Raw $configSrc | ConvertFrom-Json
 
-    # Inject detected Google Drive base path
-    if ($detectedDriveBase) {
-        $template.base = $detectedDriveBase
-    }
-
-    # Inject detected Odoo paths
-    $template.odoo.odoo_version    = [int]$odooVersion
-    $template.odoo.community_path  = $communityPath
-    $template.odoo.enterprise_path = $enterprisePath
+    # Inject workspace_path (Odoo projects root for this machine)
+    $template.workspace_path = $odooBase   # e.g. C:\Development\Odoo\18
 
     $template | ConvertTo-Json -Depth 5 | Set-Content -Path $configDest -Encoding UTF8
 
     Write-Host "  [+] Config created at: $configDest" -ForegroundColor Green
-    Write-Host "      Edit 'owner', 'team', and 'projects' — then run /engram-drive setup." -ForegroundColor DarkGray
+    Write-Host "      Edit 'owner' and 'team_roster' — then run /engram-drive setup." -ForegroundColor DarkGray
 } else {
     Write-Host "  [~] Config already exists — skipped: $configDest" -ForegroundColor DarkGray
 }
@@ -306,10 +338,11 @@ if ($enterprisePath) {
 }
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Cyan
-Write-Host "  1. Edit $configDest — set your name, Drive path, and team"
+Write-Host "  1. Edit $configDest — set your 'owner' and 'team_roster'"
 Write-Host "  2. Open your AI agent in your Odoo project directory"
-Write-Host "  3. Run: /engram-drive setup    → configure team memory sync"
-Write-Host "  4. Run: /sdd-init              → initialize Spec-Driven Development"
+Write-Host "  3. Run: /engram-drive setup            → configure team memory sync"
+Write-Host "  3. Or:  new-project.ps1 -ProjectName X → onboard a new project directly"
+Write-Host "  4. Run: /sdd-init                      → initialize Spec-Driven Development"
 Write-Host ""
 Write-Host "  Documentation: https://github.com/Geraldow/odoo-ai" -ForegroundColor DarkGray
 Write-Host ""
