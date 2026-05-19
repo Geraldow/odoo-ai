@@ -68,9 +68,9 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name ps2exe -Scope CurrentUser -Force -Repository PSGallery
-          Invoke-ps2exe -InputFile install.ps1 -OutputFile dist\install.exe -NoConsole:$false
-          Write-Host "✅ install.exe compiled"
-          Get-Item "dist\install.exe" | Select-Object Name, @{N='Size';E={"{0:N0} KB" -f ($_.Length / 1KB)}}
+          Invoke-ps2exe -InputFile install.ps1 -OutputFile dist\odoo-ai-install.exe -NoConsole:$false
+          Write-Host "✅ odoo-ai-install.exe compiled"
+          Get-Item "dist\odoo-ai-install.exe" | Select-Object Name, @{N='Size';E={"{0:N0} KB" -f ($_.Length / 1KB)}}
 
       # ── TASK 2.4: GitHub Release creation ───────────────────────
       - name: Create GitHub Release
@@ -84,7 +84,7 @@ jobs:
             ### Installation
 
             **Option A — Installer (recommended)**
-            1. Download `install.exe`
+            1. Download `odoo-ai-install.exe`
             2. Double-click to run — follows the interactive setup wizard
 
             **Option B — ZIP**
@@ -98,7 +98,7 @@ jobs:
             - Git
           files: |
             dist/odoo-ai-v${{ steps.version.outputs.VERSION }}.zip
-            dist/install.exe
+            dist/odoo-ai-install.exe
           draft: false
           prerelease: false
         env:
