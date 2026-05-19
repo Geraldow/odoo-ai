@@ -145,7 +145,8 @@ The installer will walk you through:
 4. **Enterprise source** — if you have an active Odoo subscription, you can link your existing Enterprise copy or clone it yourself
 5. **Skills installation** — copies all skills to `~/.claude/skills/`
 6. **Hook scripts** — copies all hook scripts to `~/.claude/scripts/`
-7. **Config generation** — creates `~/.claude/engram-sync-config.json` with your detected Odoo paths pre-filled
+7. **Hooks configuration** — injects the hooks block into `~/.claude/settings.json` automatically (skips if hooks are already present)
+8. **Config generation** — creates `~/.claude/engram-sync-config.json` with your detected Odoo paths pre-filled
 
 ### Keeping plugins up to date
 
@@ -159,16 +160,14 @@ Then re-run `install.ps1` (or copy the updated plugins manually) to apply change
 
 ### First run
 
-**Step 1 — Add hooks to your settings.json**
-
-Copy the hook block from `config-templates/settings-hooks.template.json` into `~/.claude/settings.json` under the `"hooks"` key. These hooks activate automatic Odoo project detection, SDD task-size enforcement, and engram memory sync on every session.
-
-**Step 2 — Open your AI agent in your Odoo project directory, then:**
+Open your AI agent in your Odoo project directory, then:
 
 ```
 /engram-drive setup     → detect environment, configure team, create Drive folders
 /sdd-init               → initialize Spec-Driven Development for this project
 ```
+
+> Hooks are configured automatically by the installer. No manual `settings.json` edits required.
 
 ---
 
