@@ -39,7 +39,7 @@ ls __manifest__.py 2>/dev/null || find . -name "__manifest__.py" -maxdepth 2 | h
 **If Odoo detected:**
 - Read `__manifest__.py` → Odoo version (18.0 → v18)
 - Load `odoo-development` skill for ALL architectural patterns (model design, field types, view inheritance, security, ORM patterns)
-- **Enterprise source verification (MANDATORY)**: For EACH Odoo API, manifest key, hook signature, decorator, or XML pattern used in the design → grep `C:\Development\Odoo\Source\enterprise\` for exact usage. Document the verified format in the design artifact. Never assume a format — always verify.
+- **Enterprise source verification (MANDATORY)**: For EACH Odoo API, manifest key, hook signature, decorator, or XML pattern used in the design → use the **codesearch MCP search tool** with `repo: "enterprise"` to find exact usage. Document the verified format in the design artifact. Never assume — always verify. Source: `C:\Development\Odoo\18\Source\enterprise\` (43,931 chunks indexed).
 - Design MUST follow OCA conventions: no `attrs`, use `Command` objects for x2many, `_compute_display_name` not `name_get`
 - Data Flow section MUST include OWL→RPC→Python chain if frontend is involved
 - Testing Strategy must include: `TransactionCase` (unit), `HttpCase` (integration), Playwright E2E (UI)

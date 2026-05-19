@@ -24,11 +24,17 @@ metadata:
 ## Source Paths
 
 ```
-Enterprise: C:\Development\Odoo\Source\enterprise\   ← 677 módulos Odoo 18
-Community:  C:\Development\Odoo\Community\18\         ← módulos Community/custom
+Enterprise: C:\Development\Odoo\18\Source\enterprise\   ← 677 módulos Odoo 18 (indexado en codesearch alias: enterprise)
+Projects:   C:\Development\Odoo\18\{project}\           ← proyectos custom (indexados en codesearch alias: {project})
 ```
 
-Usar **forward slashes** con Glob/Read. Usar **PowerShell** para verificar existencia.
+## Herramienta por contexto de búsqueda
+
+| Contexto | Herramienta | Por qué |
+|----------|-------------|---------|
+| Buscar patrón en múltiples módulos Enterprise | **codesearch MCP** (search tool, `repo: "enterprise"`) | ~94% menos tokens vs Grep sobre 677 módulos |
+| Leer archivo específico de path conocido | **Read tool** | Más directo que codesearch para 1 archivo |
+| Buscar patrón dentro de un módulo ya localizado | **Grep/Glob** (bounded al folder del módulo) | Eficiente para búsquedas acotadas |
 
 ---
 
@@ -36,13 +42,18 @@ Usar **forward slashes** con Glob/Read. Usar **PowerShell** para verificar exist
 
 ### Paso 1 — Verificar y localizar módulo
 
-```powershell
-# Buscar en Enterprise primero, luego Community
-Test-Path "C:\Development\Odoo\Source\enterprise\{module}"
-Test-Path "C:\Development\Odoo\Community\18\{module}"
+```
+# 1. Buscar en Enterprise con codesearch (más rápido que explorar filesystem)
+Use codesearch search tool:
+  query: "{module}"
+  repo: "enterprise"
+
+# 2. Confirmar path exacto con PowerShell
+Test-Path "C:\Development\Odoo\18\Source\enterprise\{module}"
+Test-Path "C:\Development\Odoo\18\{project}\{module}"
 ```
 
-Si no existe en ninguno → responder con nombre exacto del directorio esperado.
+Si codesearch no encuentra el módulo y Test-Path falla → responder con nombre exacto del directorio esperado.
 
 ---
 
@@ -374,19 +385,30 @@ mem_save(
 
 ```powershell
 # Verificar módulo existe (Enterprise)
-Test-Path "C:\Development\Odoo\Source\enterprise\{module}"
+Test-Path "C:\Development\Odoo\18\Source\enterprise\{module}"
 
-# Verificar módulo existe (Community/custom)
-Test-Path "C:\Development\Odoo\Community\18\{module}"
+# Verificar módulo existe (proyecto custom)
+Test-Path "C:\Development\Odoo\18\{project}\{module}"
+```
 
-# Listar módulos Enterprise disponibles
-ls C:/Development/Odoo/Source/enterprise/ | head -50
+```
+# Listar / buscar módulos Enterprise → codesearch MCP (no usar ls sobre 677 módulos)
+Use codesearch search tool:
+  query: "{module_name_or_keyword}"
+  repo: "enterprise"
 
-# Buscar módulo por keyword
-ls C:/Development/Odoo/Source/enterprise/ | grep {keyword}
+# Buscar patrón en todos los módulos Enterprise
+Use codesearch search tool:
+  query: "{pattern}"        # ej: "_inherit = 'account.move'"
+  repo: "enterprise"
+
+# Buscar en proyecto custom específico
+Use codesearch search tool:
+  query: "{pattern}"
+  repo: "{project}"         # ej: "intiflow", "aeca", "conservial"
 ```
 
 ## Resources
 
-- **Source Enterprise**: `C:\Development\Odoo\Source\enterprise\` — 677 módulos Odoo 18
-- **Source Community/Custom**: `C:\Development\Odoo\Community\18\`
+- **Source Enterprise**: `C:\Development\Odoo\18\Source\enterprise\` — 677 módulos Odoo 18 (alias codesearch: `enterprise`)
+- **Proyectos custom**: `C:\Development\Odoo\18\{project}\` (aliases: `intiflow`, `aeca`, `conservial`, `omnia`)
