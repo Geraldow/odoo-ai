@@ -28,7 +28,7 @@ Template: `config-template.json` (copy and fill in before first use)
 
 ## Folder Structure in Google Drive
 
-```
+```text
 <My Drive>/Engram/engram-sync/
 ├── RULES.md
 ├── SECURITY.md
@@ -45,7 +45,7 @@ New project = new folder. New teammate = new subfolder. No config change needed.
 
 ## Available Commands
 
-```
+```text
 /engram-drive setup               → interactive onboarding: detect environment, assign roles, create folders
 /engram-drive setup <project>     → onboard a new project (alias for new-project.ps1)
 /engram-drive sync                → export your memories + import all teammates (all projects)

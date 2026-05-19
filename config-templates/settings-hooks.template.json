@@ -76,6 +76,16 @@
             "shell": "bash"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $HOME/.claude/scripts/git-protocol-check.py",
+            "shell": "bash"
+          }
+        ]
       }
     ],
     "PostCompact": [
