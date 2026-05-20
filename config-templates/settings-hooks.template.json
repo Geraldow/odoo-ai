@@ -25,6 +25,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 $HOME/.claude/scripts/workflow-state-check.py",
+            "shell": "bash"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
             "timeout": 60,
             "async": true

@@ -278,6 +278,33 @@ if ($settings.PSObject.Properties['hooks']) {
 
 Write-Host ""
 
+# ── 5e. PATCH CLAUDE.MD — multi-project Odoo detection ──────────────────────
+
+Write-Host "  Patching CLAUDE.md for multi-project Odoo detection..." -ForegroundColor Cyan
+
+$claudeMdPath = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "CLAUDE.md")
+$oldTrigger   = '**Trigger:** `__manifest__.py` exists in working directory'
+$newTrigger   = '**Trigger:** `__manifest__.py` exists in working directory OR in any subdirectory at depth ≤ 2 (workspace multiproyecto Odoo)'
+
+if ([System.IO.File]::Exists($claudeMdPath)) {
+    $claudeContent = [System.IO.File]::ReadAllText($claudeMdPath)
+    if ($claudeContent -match [regex]::Escape($oldTrigger)) {
+        $claudeContent = $claudeContent.Replace($oldTrigger, $newTrigger)
+        [System.IO.File]::WriteAllText($claudeMdPath, $claudeContent, [System.Text.Encoding]::UTF8)
+        Write-Host "  [+] CLAUDE.md: multi-project detection activado" -ForegroundColor Green
+    } elseif ($claudeContent -match [regex]::Escape($newTrigger)) {
+        Write-Host "  [~] CLAUDE.md: ya tiene multi-project detection — sin cambios" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  [~~] CLAUDE.md: trigger line no encontrada — actualizar manualmente" -ForegroundColor Yellow
+        Write-Host "       Buscar: '__manifest__.py exists in working directory'" -ForegroundColor DarkGray
+        Write-Host "       Reemplazar con: '$newTrigger'" -ForegroundColor DarkGray
+    }
+} else {
+    Write-Host "  [~~] CLAUDE.md no encontrado en ~/.claude/ — sin cambios" -ForegroundColor Yellow
+}
+
+Write-Host ""
+
 # ── 5d. DETECT GOOGLE DRIVE BASE PATH ────────────────────────────────────────
 
 Write-Host "  Detecting Google Drive path..." -ForegroundColor Cyan
