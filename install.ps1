@@ -351,7 +351,8 @@ if (-not [System.IO.File]::Exists($configDest)) {
     Write-Host "  Example: [1] Geraldo/Projects/engram-sync" -ForegroundColor DarkGray
     Write-Host "  (Press Enter to use default: Engram/engram-sync)" -ForegroundColor DarkGray
     $baseInput = Read-Host "  Drive path"
-    $template.base_relative = if ($baseInput.Trim() -ne "") { $baseInput.Trim() } else { "Engram/engram-sync" }
+    $baseRaw = if ($baseInput.Trim() -ne "") { $baseInput.Trim() } else { "Engram\engram-sync" }
+    $template.base_relative = $baseRaw.Replace("/", "\")
 
     # Inject workspace_path
     $template.workspace_path = $odooBase
