@@ -50,6 +50,15 @@
             "timeout": 60
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":\"[SKILL-EVOLVER CHECK] Before finishing: did this session introduce any reusable pattern (new SSH workflow, Odoo.sh ops, Docker setup, Odoo discovery, naming convention, new script, repeated multi-step process)? If yes → invoke skill-evolver NOW with a description of the pattern BEFORE saying done.\"}}'",
+            "shell": "bash"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

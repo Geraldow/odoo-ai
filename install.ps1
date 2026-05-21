@@ -33,6 +33,7 @@ Write-Host "  Checking prerequisites..." -ForegroundColor Cyan
 
 Check "Claude Code" (Get-Command claude -ErrorAction SilentlyContinue) "Install from https://claude.ai/code"
 Check "git"         (Get-Command git    -ErrorAction SilentlyContinue) "Install from https://git-scm.com"
+Check "Go (engram)" (Get-Command go     -ErrorAction SilentlyContinue) "Install from https://go.dev/dl/"
 
 $gdRunning = Get-Process -Name "GoogleDriveFS","googledrivesync" -ErrorAction SilentlyContinue
 Check "Google Drive" ($null -ne $gdRunning) "Install from https://drive.google.com/drive/download (needed for engram-drive)"
@@ -40,6 +41,19 @@ Check "Google Drive" ($null -ne $gdRunning) "Install from https://drive.google.c
 Write-Host ""
 
 # ── AUTO-INSTALL: engram ──────────────────────────────────────────────────────
+
+if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
+    Write-Host "  [~~] Go not found — installing via winget..." -ForegroundColor Yellow
+    winget install GoLang.Go --accept-source-agreements --accept-package-agreements -e --silent 2>&1 | Out-Null
+    $env:PATH += ";$env:USERPROFILE\go\bin;C:\Program Files\Go\bin"
+    if (Get-Command go -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK] Go installed" -ForegroundColor Green
+    } else {
+        Write-Host "  [!!] Go installed — restart terminal for PATH to take effect." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  [OK] Go $(go version 2>$null | Select-String -Pattern 'go\d+\.\d+' | ForEach-Object { $_.Matches[0].Value })" -ForegroundColor Green
+}
 
 if (-not (Get-Command engram -ErrorAction SilentlyContinue)) {
     Write-Host "  [~~] engram not found — installing via claude plugin..." -ForegroundColor Yellow
@@ -53,35 +67,6 @@ if (-not (Get-Command engram -ErrorAction SilentlyContinue)) {
     Write-Host "  [OK] engram" -ForegroundColor Green
 }
 
-# ── AUTO-INSTALL: codesearch ──────────────────────────────────────────────────
-
-$csExe = [System.IO.Path]::Combine($env:SystemDrive, "Tools", "codesearch", "codesearch.exe")
-
-if (-not (Test-Path -LiteralPath $csExe) -and -not (Get-Command codesearch -ErrorAction SilentlyContinue)) {
-    Write-Host "  [~~] codesearch not found — downloading latest release..." -ForegroundColor Yellow
-    try {
-        $release  = Invoke-RestMethod -Uri "https://api.github.com/repos/flupkede/codesearch/releases/latest"
-        $asset    = $release.assets | Where-Object { $_.name -match "windows.*x86_64|x86_64.*windows" } | Select-Object -First 1
-        if (-not $asset) { $asset = $release.assets | Where-Object { $_.name -match "\.exe$" } | Select-Object -First 1 }
-
-        if ($asset) {
-            $csDir = [System.IO.Path]::GetDirectoryName($csExe)
-            [System.IO.Directory]::CreateDirectory($csDir) | Out-Null
-            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $csExe -UseBasicParsing
-            Write-Host "  [OK] codesearch installed: $csExe" -ForegroundColor Green
-            Write-Host "  [~~] Add to PATH: $csDir" -ForegroundColor DarkGray
-            [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$csDir", "User")
-            $env:PATH += ";$csDir"
-        } else {
-            Write-Host "  [!!] No Windows binary found in release — install manually: https://github.com/flupkede/codesearch/releases" -ForegroundColor Yellow
-        }
-    } catch {
-        Write-Host "  [!!] Download failed: $_" -ForegroundColor Yellow
-        Write-Host "       Install manually: https://github.com/flupkede/codesearch/releases" -ForegroundColor DarkGray
-    }
-} else {
-    Write-Host "  [OK] codesearch" -ForegroundColor Green
-}
 
 Write-Host ""
 
@@ -267,13 +252,31 @@ if (Test-Path -LiteralPath $settingsPath) {
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($settingsPath)) | Out-Null
 }
 
-if ($settings.PSObject.Properties['hooks']) {
-    Write-Host "  [~] Hooks already present in settings.json — skipped." -ForegroundColor DarkGray
-    Write-Host "      To update manually: config-templates/settings-hooks.template.json" -ForegroundColor DarkGray
+if (-not $settings.PSObject.Properties['hooks']) {
+    $settings | Add-Member -NotePropertyName 'hooks' -NotePropertyValue ([PSCustomObject]@{})
+}
+
+$added = 0
+foreach ($event in $hooksTpl.hooks.PSObject.Properties.Name) {
+    $tplEntries = $hooksTpl.hooks.$event
+    if (-not $settings.hooks.PSObject.Properties[$event]) {
+        $settings.hooks | Add-Member -NotePropertyName $event -NotePropertyValue @()
+    }
+    $existingCommands = @($settings.hooks.$event | ForEach-Object { $_.hooks | ForEach-Object { $_.command } })
+    foreach ($entry in $tplEntries) {
+        $cmd = $entry.hooks[0].command
+        if ($existingCommands -notcontains $cmd) {
+            $settings.hooks.$event += $entry
+            $added++
+        }
+    }
+}
+
+$settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
+if ($added -gt 0) {
+    Write-Host "  [+] $added hook(s) merged into: $settingsPath" -ForegroundColor Green
 } else {
-    $settings | Add-Member -NotePropertyName 'hooks' -NotePropertyValue $hooksTpl.hooks
-    $settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
-    Write-Host "  [+] Hooks configured in: $settingsPath" -ForegroundColor Green
+    Write-Host "  [~] All hooks already present — no changes needed." -ForegroundColor DarkGray
 }
 
 Write-Host ""
@@ -305,49 +308,58 @@ if ([System.IO.File]::Exists($claudeMdPath)) {
 
 Write-Host ""
 
-# ── 5d. DETECT GOOGLE DRIVE BASE PATH ────────────────────────────────────────
+# ── 5d. DETECT GOOGLE DRIVE ──────────────────────────────────────────────────
 
-Write-Host "  Detecting Google Drive path..." -ForegroundColor Cyan
+Write-Host "  Detecting Google Drive..." -ForegroundColor Cyan
 
-$detectedDriveBase = ""
+$detectedDriveLetter = ""
 foreach ($letter in 65..90 | ForEach-Object { [char]$_ }) {
-    $root = "${letter}:\"
-    if (-not [System.IO.Directory]::Exists($root)) { continue }
-
-    $myDrive = [System.IO.Path]::Combine($root, "My Drive")
-    if ([System.IO.Directory]::Exists($myDrive)) {
-        $detectedDriveBase = [System.IO.Path]::Combine($myDrive, "Engram", "engram-sync")
-        Write-Host "  [OK] Google Drive found at ${letter}: → $detectedDriveBase" -ForegroundColor Green
-        break
-    }
-
-    # Legacy Google Backup and Sync
-    $legacyRoot = [System.IO.Path]::Combine($root, "Google Drive")
-    if ([System.IO.Directory]::Exists($legacyRoot)) {
-        $detectedDriveBase = [System.IO.Path]::Combine($legacyRoot, "Engram", "engram-sync")
-        Write-Host "  [OK] Google Drive (legacy) found at ${letter}: → $detectedDriveBase" -ForegroundColor Green
+    $myDrive = "${letter}:\My Drive"
+    $legacyDrive = "${letter}:\Google Drive"
+    if ([System.IO.Directory]::Exists($myDrive) -or [System.IO.Directory]::Exists($legacyDrive)) {
+        $detectedDriveLetter = "${letter}:"
+        Write-Host "  [OK] Google Drive found at ${letter}:" -ForegroundColor Green
         break
     }
 }
 
-if (-not $detectedDriveBase) {
-    Write-Host "  [~~] Google Drive not detected — set 'base' manually in the config after install." -ForegroundColor Yellow
+if (-not $detectedDriveLetter) {
+    Write-Host "  [~~] Google Drive not detected — install Google Drive and re-run, or set base_relative manually after install." -ForegroundColor Yellow
 }
 
 Write-Host ""
 
 # ── 6. WRITE CONFIG ───────────────────────────────────────────────────────────
 
+Write-Host "  Engram sync configuration..." -ForegroundColor Cyan
+
 if (-not [System.IO.File]::Exists($configDest)) {
     $template = Get-Content -Raw $configSrc | ConvertFrom-Json
 
-    # Inject workspace_path (Odoo projects root for this machine)
-    $template.workspace_path = $odooBase   # e.g. C:\Development\Odoo\18
+    # Ask for owner name (used as personal subfolder in Drive sync)
+    Write-Host ""
+    Write-Host "  Your first name (used as your subfolder in the shared Drive sync):" -ForegroundColor Cyan
+    Write-Host "  Example: Geraldo, Rachel, Percy" -ForegroundColor DarkGray
+    $ownerInput = Read-Host "  Name"
+    $template.owner = if ($ownerInput.Trim() -ne "") { $ownerInput.Trim() } else { "YourFirstName" }
+
+    # Ask for base_relative (path inside My Drive to the shared engram-sync folder)
+    Write-Host ""
+    Write-Host "  Path to the shared engram-sync folder inside your Google Drive 'My Drive'." -ForegroundColor Cyan
+    Write-Host "  Ask your team lead for the folder path, then add it as a shortcut in your Drive." -ForegroundColor DarkGray
+    Write-Host "  Example: Engram/engram-sync" -ForegroundColor DarkGray
+    Write-Host "  Example: [1] Geraldo/Projects/engram-sync" -ForegroundColor DarkGray
+    Write-Host "  (Press Enter to use default: Engram/engram-sync)" -ForegroundColor DarkGray
+    $baseInput = Read-Host "  Drive path"
+    $template.base_relative = if ($baseInput.Trim() -ne "") { $baseInput.Trim() } else { "Engram/engram-sync" }
+
+    # Inject workspace_path
+    $template.workspace_path = $odooBase
 
     $template | ConvertTo-Json -Depth 5 | Set-Content -Path $configDest -Encoding UTF8
 
     Write-Host "  [+] Config created at: $configDest" -ForegroundColor Green
-    Write-Host "      Edit 'owner' and 'team_roster' — then run /engram-drive setup." -ForegroundColor DarkGray
+    Write-Host "      Update 'team_roster' with your team — then run /engram-drive setup." -ForegroundColor DarkGray
 } else {
     Write-Host "  [~] Config already exists — skipped: $configDest" -ForegroundColor DarkGray
 }
