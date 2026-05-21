@@ -272,11 +272,30 @@ foreach ($event in $hooksTpl.hooks.PSObject.Properties.Name) {
     }
 }
 
+# additionalDirectories — essential Odoo ecosystem paths only
+$essentialDirs = @(
+    [System.IO.Path]::Combine($env:USERPROFILE, ".claude"),
+    [System.IO.Path]::Combine($env:USERPROFILE, ".ssh")
+)
+if (-not $settings.PSObject.Properties['permissions']) {
+    $settings | Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})
+}
+if (-not $settings.permissions.PSObject.Properties['additionalDirectories']) {
+    $settings.permissions | Add-Member -NotePropertyName 'additionalDirectories' -NotePropertyValue @()
+}
+$addedDirs = 0
+foreach ($dir in $essentialDirs) {
+    if (-not ($settings.permissions.additionalDirectories | Where-Object { $_ -ieq $dir })) {
+        $settings.permissions.additionalDirectories += $dir
+        $addedDirs++
+    }
+}
+
 $settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
-if ($added -gt 0) {
-    Write-Host "  [+] $added hook(s) merged into: $settingsPath" -ForegroundColor Green
+if ($added -gt 0 -or $addedDirs -gt 0) {
+    Write-Host "  [+] $added hook(s) merged, $addedDirs dir(s) added to additionalDirectories" -ForegroundColor Green
 } else {
-    Write-Host "  [~] All hooks already present — no changes needed." -ForegroundColor DarkGray
+    Write-Host "  [~] Hooks and directories already configured — no changes needed." -ForegroundColor DarkGray
 }
 
 Write-Host ""
