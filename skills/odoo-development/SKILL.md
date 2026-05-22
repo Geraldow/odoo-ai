@@ -64,7 +64,7 @@ Detectar necesidad del usuario usando tabla abajo → cargar plugin hijo
 | ir.cron avanzado | peterurban | — |
 | Patrones accounting v18 | peterurban | — |
 | Patrones sales v18 | peterurban | — |
-| Validar identidad contribuidor Alesco | alesco | `plugins/odoo-development-alesco/CONTRIBUTING.md` |
+| Validar identidad contribuidor del equipo | — | Ver `~/.claude/skills/odoo-development/CONTRIBUTING.md` (local, generado por el equipo durante setup) |
 
 ---
 
