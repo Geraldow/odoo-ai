@@ -8,12 +8,18 @@ $configPath = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "engram-syn
 if (-not (Test-Path -LiteralPath $configPath)) { exit 0 }
 
 $config   = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-$base     = $config.base
 $owner    = $config.owner
 $projects = $config.projects
 
+# Resolve Drive path the same way session-end does — via detect-environment.ps1
+$detectScript = [System.IO.Path]::Combine(
+    $env:USERPROFILE, ".claude", "skills", "engram-drive", "scripts", "detect-environment.ps1")
+if (-not (Test-Path -LiteralPath $detectScript)) { exit 0 }
+. $detectScript -RunDetection:$false
+$base = Resolve-DrivePath $config.base_relative
+
 # Guards
-if (-not (Test-Path -LiteralPath $base)) { exit 0 }
+if (-not $base -or -not (Test-Path -LiteralPath $base)) { exit 0 }
 if (-not (Get-Command engram -ErrorAction SilentlyContinue)) { exit 0 }
 if (-not $projects -or $projects.Count -eq 0) { exit 0 }
 
