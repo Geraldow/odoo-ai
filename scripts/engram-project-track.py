@@ -2,6 +2,7 @@
 """
 PostToolUse hook: tracks active engram project based on file path being edited/read.
 Only injects context when project changes (mid-session switch detection).
+Also loads AGENTS.md from the newly active project on switch.
 Source of truth: ~/.claude/engram-sync-config.json
 State file:      ~/.claude/engram-active-project.tmp
 """
@@ -17,6 +18,18 @@ def find_git_root(path):
         if parent == current:
             return None
         current = parent
+
+
+def read_agents_md(path):
+    """Read AGENTS.md from project root. Returns content string or None."""
+    agents_path = os.path.join(path, 'AGENTS.md')
+    if not os.path.exists(agents_path):
+        return None
+    try:
+        content = open(agents_path, encoding='utf-8', errors='ignore').read().strip()
+        return content if content else None
+    except Exception:
+        return None
 
 
 try:
@@ -46,13 +59,19 @@ try:
     if project != last:
         with open(state_file, 'w') as f:
             f.write(project)
+
+        ctx = (
+            f"[ENGRAM ACTIVE PROJECT → {project}] "
+            f"Pass project='{project}' in all subsequent mem_save calls."
+        )
+        agents = read_agents_md(git_root)
+        if agents:
+            ctx += f"\n\n[AGENTS.md — {project}]\n{agents}"
+
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",
-                "additionalContext": (
-                    f"[ENGRAM ACTIVE PROJECT → {project}] "
-                    f"Pass project='{project}' in all subsequent mem_save calls."
-                ),
+                "additionalContext": ctx,
             }
         }))
 
