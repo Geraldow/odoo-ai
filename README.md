@@ -182,6 +182,78 @@ Open your AI agent in your Odoo project directory, then:
 
 ---
 
+## How Claude Code runs with odoo-ai
+
+When you open Claude Code in an Odoo project, the framework runs silently in the background — injecting context before you even type the first prompt. Here is the full lifecycle of a session:
+
+```mermaid
+flowchart TB
+    subgraph start ["  Session Opens — SessionStart (5 hooks in parallel)  "]
+        direction LR
+        ss1["engram-detect\nproject → context"]
+        ss2["odoo-detect\nskill load reminder"]
+        ss3["engram-session-start\nimport teammates"]
+        ss4["odoo-ai-update-check\nnew releases?"]
+        ss5["workflow-state-check\nbranch + git protocol"]
+    end
+
+    subgraph prompt ["  User Sends Prompt — UserPromptSubmit  "]
+        direction LR
+        up1["sdd_task_check\nsize classification"]
+        up2["odoo-enforce\nkeyword detection → skill reminder"]
+    end
+
+    subgraph pretool ["  Claude Calls a Tool — PreToolUse  "]
+        direction LR
+        pt1["sdd_odoo_check\nOdoo file guard + SDD enforcement"]
+        pt2["git-protocol-check\ngit/gh safety protocol"]
+        pt3["secrets-scan\ncredential scanner"]
+    end
+
+    subgraph posttool ["  Tool Returns — PostToolUse  "]
+        direction LR
+        pot1["engram-project-track\nproject context switch"]
+        pot2["client-data-guard\nPII protection (Ley 29733)"]
+        pot3["prompt-injection-check\ninjection scan"]
+    end
+
+    subgraph compact ["  Compaction — PostCompact  "]
+        direction LR
+        pc1["engram-session-start\nre-import teammates"]
+        pc2["sdd_task_check\nre-inject SDD rules"]
+        pc3["odoo-enforce\nre-inject Odoo reminder"]
+    end
+
+    subgraph stop ["  Session Closes — Stop  "]
+        st1["engram-session-end\nexport + import memories"]
+    end
+
+    start --> prompt
+    prompt --> pretool
+    pretool --> posttool
+    posttool -->|"normal flow"| prompt
+    posttool -.->|"context limit hit"| compact
+    compact -.->|"session resumes"| prompt
+    posttool -->|"session ends"| stop
+
+    classDef hookNode fill:#1a2e1a,stroke:#22c55e,stroke-width:2px,color:#fff
+    classDef stopNode fill:#2e1a1a,stroke:#ef4444,stroke-width:2px,color:#fff
+
+    class ss1,ss2,ss3,ss4,ss5,up1,up2,pt1,pt2,pt3,pot1,pot2,pot3,pc1,pc2,pc3 hookNode
+    class st1 stopNode
+
+    style start   fill:#0d2a0d,stroke:#22c55e,stroke-width:1px,color:#fff
+    style prompt  fill:#1a1a2e,stroke:#a855f7,stroke-width:1px,color:#fff
+    style pretool fill:#2a1a0d,stroke:#f59e0b,stroke-width:1px,color:#fff
+    style posttool fill:#0d2a2a,stroke:#22d3ee,stroke-width:1px,color:#fff
+    style compact fill:#2a0d2a,stroke:#ec4899,stroke-width:1px,color:#fff
+    style stop    fill:#2e1a1a,stroke:#ef4444,stroke-width:1px,color:#fff
+```
+
+Every hook outputs structured JSON — either injecting `additionalContext` (visible only to the model) or a `systemMessage` (shown in the UI). No hook ever blocks a session — all are wrapped in `try/except` with `exit(0)` on error.
+
+---
+
 ## Hooks
 
 The `scripts/` directory contains Claude Code hooks that run automatically during sessions. They are installed to `~/.claude/scripts/` by `install.ps1` and activated by adding the block from `config-templates/settings-hooks.template.json` to your `~/.claude/settings.json`.
@@ -190,12 +262,51 @@ The `scripts/` directory contains Claude Code hooks that run automatically durin
 |---|---|---|
 | `engram-detect.py` | `SessionStart` | Detects which engram project is active based on CWD; injects `project=` reminder into context |
 | `odoo-detect.py` | `SessionStart` | Detects `__manifest__.py` in CWD; injects mandatory odoo-development skill loading sequence |
-| `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open |
+| `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open and after compaction |
+| `odoo-ai-update-check.ps1` | `SessionStart` | Checks for new commits on `origin/main`; notifies team if behind with commit list and update instructions |
+| `workflow-state-check.py` | `SessionStart` | Detects active git workflow (Odoo `st_*`/`db_*` branches or GitFlow); injects current branch and protocol as context |
 | `sdd_task_check.py` | `UserPromptSubmit` + `PostCompact` | Injects SDD task-size classification reminder before every prompt |
-| `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to run `/sdd-ff` for Moderado/Complejo tasks |
+| `odoo-enforce.py` | `UserPromptSubmit` + `PostCompact` | Detects Odoo project by CWD; scans prompt for humanized keywords (ES+EN) and injects targeted skill reminders — odoo-development, odoo-source, ORM, report, or security |
+| `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to classify task size, run `/sdd-ff` for Moderado/Complejo, and load odoo-development before writing any code |
+| `git-protocol-check.py` | `PreToolUse` | Intercepts `git`/`gh` Bash commands; injects branch safety protocol reminder before commits, pushes, and merges |
+| `secrets-scan.py` | `PreToolUse` | Scans file content before `Write`/`Edit` operations; blocks writes containing API keys, passwords, private keys, or credentials |
 | `engram-project-track.py` | `PostToolUse` | Tracks active engram project as files are edited; injects `project=` update on context switch |
+| `client-data-guard.py` | `PostToolUse` | Fires after SSH/psql commands accessing client servers; enforces strict PII protection rules — prevents customer data from leaking into memory, commits, or chat (Ley 29733 Perú) |
+| `prompt-injection-check.py` | `PostToolUse` | Scans `Bash` and `Read` outputs for embedded instructions that attempt to hijack Claude's behavior |
 | `engram-session-end.ps1` | `Stop` | Exports your memories to Google Drive + imports teammates' latest at session close |
 | `engram-sync.ps1` | Manual / `Stop` | Smart sync — detects single-project vs multi-project workspace and syncs accordingly |
+
+### Odoo keyword detection (`odoo-enforce.py`)
+
+Every prompt goes through a two-stage scan. First, it checks whether the CWD is an Odoo project. Then, it matches the user's natural language — in both Spanish and English — against four keyword groups to inject the most relevant skill reminder:
+
+```mermaid
+flowchart TD
+    P(["User Prompt"]) --> OD{"__manifest__.py\nat depth ≤ 2?"}
+    OD -->|"no"| EXIT(["exit silently"])
+    OD -->|"yes"| BASE["[ODOO SKILL REQUIRED]\nload odoo-development\nrun version-detect + module-intelligence"]
+
+    BASE --> KW{"Keyword scan\nES + EN"}
+
+    KW -->|"formulario de · in the form\norden de venta · sale order\nextender · override · pantalla de..."| EXP["[ODOO-SOURCE TRIGGER]\ninvoke odoo-source before any code\n(fields, views, xpaths, controllers)"]
+    KW -->|"campo nuevo · new field\ncalcular automáticamente · computed\nrestricción · constraint · secuencia..."| ORM["[ORM CONTEXT]\nuse fhidalgo / unclecatvn plugin\nfor v18 ORM patterns"]
+    KW -->|"reporte · informe · pdf\nimprimir · print · qweb\ngenerar pdf · generate pdf"| REP["[REPORT CONTEXT]\nuse ahmedlakos plugin\nfor QWeb / PDF report patterns"]
+    KW -->|"permisos · acceso · grupo\nregla de registro · access rights\nrecord rule · who can..."| SEC["[SECURITY CONTEXT]\nload security guide\nbefore modifying rules or groups"]
+
+    EXP & ORM & REP & SEC --> INJ(["→ additionalContext injected\nbefore Claude sees the prompt"])
+
+    classDef green  fill:#1a2e1a,stroke:#22c55e,stroke-width:2px,color:#fff
+    classDef purple fill:#2a1a2e,stroke:#a855f7,stroke-width:2px,color:#fff
+    classDef teal   fill:#0d2a2a,stroke:#22d3ee,stroke-width:2px,color:#fff
+    classDef person fill:#0d1117,stroke:#a855f7,stroke-width:2px,color:#a855f7
+
+    class BASE,EXP,ORM,REP,SEC green
+    class KW purple
+    class INJ teal
+    class P,EXIT person
+```
+
+Keyword lists are deliberately humanized — they match how developers actually phrase requests ("en el formulario de ventas", "cuando se confirma", "orden de venta") rather than technical terms that no one types in a prompt.
 
 ---
 
@@ -463,10 +574,17 @@ odoo-ai/
 ├── scripts/                       ← Claude Code hook scripts (installed to ~/.claude/scripts/)
 │   ├── engram-detect.py           ← SessionStart: detect active engram project
 │   ├── odoo-detect.py             ← SessionStart: detect Odoo project, load skill
-│   ├── sdd_task_check.py          ← UserPromptSubmit + PostCompact: SDD size guard
-│   ├── sdd_odoo_check.py          ← PreToolUse: SDD compliance on Odoo file edits
-│   ├── engram-project-track.py    ← PostToolUse: track active project on file edit
 │   ├── engram-session-start.ps1   ← SessionStart + PostCompact: import teammate memories
+│   ├── odoo-ai-update-check.ps1   ← SessionStart: notify team of new releases on origin/main
+│   ├── workflow-state-check.py    ← SessionStart: inject git branch and workflow protocol
+│   ├── sdd_task_check.py          ← UserPromptSubmit + PostCompact: SDD size guard
+│   ├── odoo-enforce.py            ← UserPromptSubmit + PostCompact: Odoo skill reminder per prompt
+│   ├── sdd_odoo_check.py          ← PreToolUse: SDD compliance on Odoo file edits
+│   ├── git-protocol-check.py      ← PreToolUse: git/gh branch safety protocol on Bash commands
+│   ├── secrets-scan.py            ← PreToolUse: block writes containing credentials or secrets
+│   ├── engram-project-track.py    ← PostToolUse: track active project on file edit
+│   ├── client-data-guard.py       ← PostToolUse: PII protection after SSH/psql access (Ley 29733)
+│   ├── prompt-injection-check.py  ← PostToolUse: detect prompt injection in Bash/Read outputs
 │   ├── engram-session-end.ps1     ← Stop: export + import memories at session close
 │   └── engram-sync.ps1            ← Manual sync: single-project or multi-project
 ├── skills/
