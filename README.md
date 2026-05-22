@@ -260,9 +260,9 @@ The `scripts/` directory contains Claude Code hooks that run automatically durin
 
 | Script | Hook event | What it does |
 |---|---|---|
-| `engram-detect.py` | `SessionStart` | Detects which engram project is active based on CWD; injects `project=` reminder into context |
+| `engram-detect.py` | `SessionStart` | Detects which engram project is active based on CWD; injects `project=` reminder into context. In single-project mode, also reads and injects `AGENTS.md` from the project root |
 | `odoo-detect.py` | `SessionStart` | Detects `__manifest__.py` in CWD; injects mandatory odoo-development skill loading sequence |
-| `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open and after compaction |
+| `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open and after compaction. Resolves Drive path via `detect-environment.ps1` |
 | `odoo-ai-update-check.ps1` | `SessionStart` | Checks for new commits on `origin/main`; notifies team if behind with commit list and update instructions |
 | `workflow-state-check.py` | `SessionStart` | Detects active git workflow (Odoo `st_*`/`db_*` branches or GitFlow); injects current branch and protocol as context |
 | `sdd_task_check.py` | `UserPromptSubmit` + `PostCompact` | Injects SDD task-size classification reminder before every prompt |
@@ -270,7 +270,7 @@ The `scripts/` directory contains Claude Code hooks that run automatically durin
 | `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to classify task size, run `/sdd-ff` for Moderado/Complejo, and load odoo-development before writing any code |
 | `git-protocol-check.py` | `PreToolUse` | Intercepts `git`/`gh` Bash commands; injects branch safety protocol reminder before commits, pushes, and merges |
 | `secrets-scan.py` | `PreToolUse` | Scans file content before `Write`/`Edit` operations; blocks writes containing API keys, passwords, private keys, or credentials |
-| `engram-project-track.py` | `PostToolUse` | Tracks active engram project as files are edited; injects `project=` update on context switch |
+| `engram-project-track.py` | `PostToolUse` | Tracks active engram project as files are edited; injects `project=` update on context switch and loads `AGENTS.md` from the newly active project |
 | `client-data-guard.py` | `PostToolUse` | Fires after SSH/psql commands accessing client servers; enforces strict PII protection rules — prevents customer data from leaking into memory, commits, or chat (Ley 29733 Perú) |
 | `prompt-injection-check.py` | `PostToolUse` | Scans `Bash` and `Read` outputs for embedded instructions that attempt to hijack Claude's behavior |
 | `engram-session-end.ps1` | `Stop` | Exports your memories to Google Drive + imports teammates' latest at session close |
@@ -608,7 +608,8 @@ odoo-ai/
 │   └── _shared/                   ← shared utilities across all skills
 ├── config-templates/
 │   ├── engram-sync-config.template.json   ← template for ~/.claude/engram-sync-config.json
-│   └── settings-hooks.template.json       ← hooks block to add to ~/.claude/settings.json
+│   ├── settings-hooks.template.json       ← hooks block to add to ~/.claude/settings.json
+│   └── CONTRIBUTING.template.md           ← template for ~/.claude/skills/odoo-development/CONTRIBUTING.md (fill in locally — never commit)
 ├── LICENSE
 └── README.md
 ```
