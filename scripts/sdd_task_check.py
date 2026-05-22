@@ -27,9 +27,12 @@ msg = (
     "If unsure about size → escalate to next level."
 )
 
-print(json.dumps({
-    "hookSpecificOutput": {
-        "hookEventName": event_name,
-        "additionalContext": msg
-    }
-}))
+if event_name == "PostCompact":
+    print(json.dumps({"systemMessage": msg}))
+else:
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": event_name,
+            "additionalContext": msg
+        }
+    }))

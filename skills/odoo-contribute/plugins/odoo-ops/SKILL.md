@@ -136,6 +136,36 @@ Para obtener la URL SSH actual de la rama {rama}:
 3. Nunca almacenar contraseñas en texto plano — usar SSH keys siempre
 4. Operar como usuario del servicio `odoo`, no como `root` ni `postgres` directamente
 
+## File Transfer from Odoo.sh
+
+**Odoo.sh no expone SFTP.** `scp` y `rsync` fallan con `subsystem request failed on channel 0`.
+
+### Único método válido — SSH + tar pipe
+
+```bash
+# Descargar módulo(s) específicos
+ssh USER@INSTANCE.odoo.com "tar czf - -C /home/odoo/src modulo_a modulo_b" \
+  | tar xzf - -C /ruta/local/destino/
+
+# Descargar directorio completo (ej: enterprise)
+ssh USER@INSTANCE.odoo.com "tar czf - -C /home/odoo/src enterprise" \
+  | tar xzf - -C /ruta/local/destino/
+
+# Leer archivo único (sin descarga)
+ssh USER@INSTANCE.odoo.com "cat /home/odoo/src/user/modulo/__manifest__.py"
+```
+
+### Paths estándar en Odoo.sh
+
+```
+/home/odoo/src/
+├── odoo/        ← Community source
+├── enterprise/  ← Enterprise source
+└── user/        ← Custom modules del proyecto
+```
+
+---
+
 ## Database Query Rules
 
 ### PERMITIDO sin confirmación (solo lectura)
@@ -233,6 +263,23 @@ SELECT pg_size_pretty(pg_database_size(current_database()));
 SELECT COUNT(*) FROM {tabla}
 WHERE id NOT IN (SELECT res_id FROM ir_model_data WHERE model = '{model.name}');
 ```
+
+## Data Privacy Protocol — Ley 29733 (Perú)
+
+Al acceder vía SSH a cualquier servidor Odoo con datos de clientes:
+
+1. **NUNCA guardar en engram**: nombres, RUC, DNI, emails, transacciones, nóminas, PII de cualquier tipo
+2. **NUNCA incluir** datos de clientes en commits, PRs, comentarios de código o mensajes
+3. **Usar los datos SOLO** para la tarea inmediata — no retenerlos entre sesiones
+4. **Si debes referenciar** un dato, enmascararlo:
+   - RUC → `20XXXXXXX12`
+   - Email → `u***@dominio.com`
+   - Nombre → `Cliente X`
+5. **Ante datos financieros** (saldos, pagos, facturas) → confirmar con el usuario antes de mostrar
+
+> Aplica incluso en staging/desarrollo si contiene datos migrados de producción.
+
+---
 
 ## Critical Rules
 

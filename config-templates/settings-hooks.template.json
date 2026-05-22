@@ -25,6 +25,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 $HOME/.claude/scripts/workflow-state-check.py",
+            "shell": "bash"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-start.ps1\"",
             "timeout": 60,
             "async": true
@@ -39,6 +48,15 @@
             "type": "command",
             "command": "powershell -NoProfile -NonInteractive -File \"$HOME/.claude/scripts/engram-session-end.ps1\"",
             "timeout": 60
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"Stop\",\"additionalContext\":\"[SKILL-EVOLVER CHECK] Before finishing: did this session introduce any reusable pattern (new SSH workflow, Odoo.sh ops, Docker setup, Odoo discovery, naming convention, new script, repeated multi-step process)? If yes → invoke skill-evolver NOW with a description of the pattern BEFORE saying done.\"}}'",
+            "shell": "bash"
           }
         ]
       }
