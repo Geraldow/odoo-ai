@@ -167,7 +167,7 @@ To pull the latest version from upstream and reinstall skills:
 powershell -File update.ps1
 ```
 
-Then re-run `install.ps1` (or copy the updated plugins manually) to apply changes to your skills directory.
+`update.ps1` pulls from `origin/main` and reinstalls all skills in one step — no need to re-run `install.ps1`.
 
 ### First run
 
@@ -289,8 +289,8 @@ flowchart TD
     BASE --> KW{"Keyword scan\nES + EN"}
 
     KW -->|"formulario de · in the form\norden de venta · sale order\nextender · override · pantalla de..."| EXP["[ODOO-SOURCE TRIGGER]\ninvoke odoo-source before any code\n(fields, views, xpaths, controllers)"]
-    KW -->|"campo nuevo · new field\ncalcular automáticamente · computed\nrestricción · constraint · secuencia..."| ORM["[ORM CONTEXT]\nuse fhidalgo / unclecatvn plugin\nfor v18 ORM patterns"]
-    KW -->|"reporte · informe · pdf\nimprimir · print · qweb\ngenerar pdf · generate pdf"| REP["[REPORT CONTEXT]\nuse ahmedlakos plugin\nfor QWeb / PDF report patterns"]
+    KW -->|"campo nuevo · new field\ncalcular automáticamente · computed\nrestricción · constraint · secuencia..."| ORM["[ORM CONTEXT]\nload odoo-ai knowledge/v18/orm\nfor v18 ORM patterns"]
+    KW -->|"reporte · informe · pdf\nimprimir · print · qweb\ngenerar pdf · generate pdf"| REP["[REPORT CONTEXT]\nload odoo-ai knowledge/business/reports\nfor QWeb / PDF report patterns"]
     KW -->|"permisos · acceso · grupo\nregla de registro · access rights\nrecord rule · who can..."| SEC["[SECURITY CONTEXT]\nload security guide\nbefore modifying rules or groups"]
 
     EXP & ORM & REP & SEC --> INJ(["→ additionalContext injected\nbefore Claude sees the prompt"])
