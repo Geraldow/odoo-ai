@@ -12,7 +12,7 @@ priority: P2
 
 ## Format
 
-Follow Keep a Changelog with Alesco section labels:
+Follow Keep a Changelog format:
 
 ```markdown
 ## [18.0.1.1.0] - 2026-05-23

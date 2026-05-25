@@ -15,7 +15,7 @@
 .PARAMETER Direction
     import | export | both
 .PARAMETER Project
-    Project name (e.g. aeca, conservial). Required.
+    Project name (e.g. mi-proyecto, proyecto-b). Required.
 .PARAMETER DriveBase
     Root path on Google Drive. Default: G:\My Drive\Engram\engram-sync
 .PARAMETER InputFile

@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Verifies that the current git committer is an authorized Alesco contributor.
+    Verifies that the current git committer is an authorized contributor.
 .PARAMETER ContribFile
     Path to CONTRIBUTING.md. Auto-located if omitted.
 .PARAMETER RepoPath
@@ -24,9 +24,8 @@ Set-StrictMode -Version Latest
 # Locate CONTRIBUTING.md
 if ([string]::IsNullOrWhiteSpace($ContribFile)) {
     $candidates = @(
-        (Join-Path $PSScriptRoot "..\plugins\odoo-development-alesco\CONTRIBUTING.md"),
-        (Join-Path $PSScriptRoot "..\knowledge\alesco\contributors.md"),
-        "~/.claude/skills/odoo-ai/plugins/odoo-development-alesco/CONTRIBUTING.md"
+        (Join-Path $PSScriptRoot "..\knowledge\contributors.md"),
+        "~/.claude/skills/odoo-ai/knowledge/contributors.md"
     )
     foreach ($c in $candidates) {
         $resolved = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($c)
@@ -138,6 +137,6 @@ Write-Host ""
 Write-Host "🚫 STOP: Committer identity not authorized."
 Write-Host "   Email: $gitEmail"
 Write-Host "   Name:  $gitName"
-Write-Host "   See: ~/.claude/skills/odoo-ai/plugins/odoo-development-alesco/CONTRIBUTING.md"
+Write-Host "   See: ~/.claude/skills/odoo-ai/knowledge/contributors.md (generated at install time)"
 Write-Host ""
 exit 1

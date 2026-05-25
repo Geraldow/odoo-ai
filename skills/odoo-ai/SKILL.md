@@ -1,10 +1,9 @@
 ---
 name: odoo-ai
-description: Hub central Odoo-AI — ORM, modelos, vistas, seguridad, testing, E2E. Enterprise First. Auto-detección de versión y workspace. Sin dependencia de plugins externos.
+description: Hub central Odoo-AI — ORM, modelos, vistas, seguridad, testing, E2E. Enterprise First. Auto-detección de versión y workspace. Template genérico para cualquier equipo.
 license: Apache-2.0
 metadata:
   author: Geraldow
-  org: Alesco-Peru
   version: "3.0"
   last-updated: "2026-05-23"
 ---
@@ -14,7 +13,7 @@ metadata:
 **Antes de cualquier otra acción**, leer:
 `~/.claude/skills/odoo-ai/RULES.md`
 
-Este archivo contiene las reglas de desarrollo propias de Alesco Perú que gobiernan TODO el trabajo Odoo. Las reglas viven en `RULES.md` — no en plugins externos.
+Este archivo contiene las reglas de desarrollo que gobiernan TODO el trabajo Odoo. Las reglas viven en `RULES.md` — no en plugins externos.
 
 ---
 
@@ -43,29 +42,29 @@ Antes de ejecutar cualquier script, detectar el modo por el directorio de trabaj
 
 ### Modo B — Proyecto Independiente
 **Condición**: `__manifest__.py` existe a profundidad ≤ 1 desde cwd.
-**Ejemplo**: cwd = `{ProjectsRoot}\18\conservial\`
+**Ejemplo**: cwd = `{ProjectsRoot}\18\mi-proyecto\`
 **Acción**: Ejecutar scripts inmediatamente en paralelo (ver Inicialización abajo).
 
 ### Modo A — Workspace Raíz (multi-proyecto)
 **Condición**: `__manifest__.py` NO existe a profundidad ≤ 1, pero SÍ existe a profundidad 2–3.
-**Ejemplo**: cwd = `{ProjectsRoot}\18\` (contiene aeca\, intiflow\, conservial\...)
+**Ejemplo**: cwd = `{ProjectsRoot}\18\` (contiene proyecto-a\, proyecto-b\, proyecto-c\...)
 **Acción**: Resolver proyecto activo PRIMERO, luego ejecutar scripts con `-Path {proyecto}/{módulo}`.
 
 **Resolución del proyecto activo** (prioridad):
 1. Archivo abierto en editor → inferir proyecto desde la ruta del archivo
 2. `git -C {subdir} branch --show-current` por subcarpeta → el que tiene actividad reciente
-3. Declaración explícita del usuario ("trabaja en intiflow")
+3. Declaración explícita del usuario ("trabaja en [project-name]")
 4. Pregunta explícita: "Detecté los proyectos: {lista}. ¿Cuál está activo?"
 
 **Distinción crítica**:
-- `project` = nombre del repo git (aeca, intiflow, conservial…) → para Engram `project=` y Drive sync
+- `project` = nombre del repo git (mi-proyecto, proyecto-b…) → para Engram `project=` y Drive sync
 - `module` = nombre del módulo Odoo (account_credit_note_pin, l10n_pe_…) → para `module-intelligence.ps1`
 
 ---
 
 ## Cambio de Proyecto en Sesión
 
-Cuando el usuario indica un nuevo proyecto activo ("ahora trabaja en conservial"):
+Cuando el usuario indica un nuevo proyecto activo ("ahora trabaja en [proyecto]"):
 
 1. Actualizar `project=` activo → nuevo nombre del repo
 2. Re-ejecutar `branch-safety-check.ps1 -RepoPath {ProjectsRoot}\18\{proyecto}\`
@@ -106,7 +105,7 @@ SEQUENTIAL después:
 
 **Guardar en Engram cuando el contexto sea**:
 - **Odoo técnico**: modelos, campos, vistas, ORM, XML, QWeb, OWL, errores, patrones, migraciones
-- **Proyecto Alesco**: decisiones, descubrimientos, arquitectura sobre aeca/intiflow/conservial/benest/omnia/gprinter
+- **Proyecto activo**: decisiones, descubrimientos, arquitectura del proyecto en curso
 
 **topic_keys**:
 - `odoo/module/{module}/intelligence` — tras análisis de módulo (Paso 11 obligatorio)
@@ -114,9 +113,9 @@ SEQUENTIAL después:
 - `odoo/discovery/{tema-kebab}` — tras descubrimiento no obvio
 - `odoo/dev/{module}/{feature-kebab}` — tras desarrollo completado
 - `odoo/query/{module}/{tema-kebab}` — tras consulta respondida con contexto Odoo
-- `project/{nombre}/decision/*` — decisión sobre proyecto Alesco específico
+- `project/{nombre}/decision/*` — decisión sobre el proyecto activo
 
-**Regla**: Si el contexto es Odoo o proyecto Alesco → guardar. Sin umbral mínimo.
+**Regla**: Si el contexto es Odoo o el proyecto activo → guardar. Sin umbral mínimo.
 
 ---
 
@@ -167,8 +166,7 @@ SEQUENTIAL después:
 | búsqueda profunda en source | `agents/module-intelligence.md` Modo 2 (Enterprise First) |
 | code review, OCA checklist | `agents/code-reviewer.md` |
 | análisis upgrade, migrate | `agents/upgrade-analyzer.md` |
-| validar identidad Alesco | `knowledge/alesco/contributors.md` |
-| proyectos Alesco en scope | `knowledge/alesco/projects.md` |
+| identidad, contribuidores | `knowledge/{tu-equipo}/contributors.md` (generado al instalar) |
 
 ---
 
@@ -180,7 +178,7 @@ SEQUENTIAL después:
 - **Enterprise First CUARTO** — para cada API: `Grep $cfg.EnterprisePath` primero
 - **knowledge/ bajo demanda** — cargar solo el archivo relevante, nunca bulk-load
 - **OCA standards** — aplicar siempre para cualquier código nuevo
-- **Engram save** — después de cualquier respuesta con contexto Odoo o proyecto Alesco
+- **Engram save** — después de cualquier respuesta con contexto Odoo o del proyecto activo
 
 ---
 
@@ -224,7 +222,7 @@ knowledge/
   api/           — JSON-RPC, server actions, external API
   security/      — scanners, ACL, vulnerabilidades
   debugging/     — diagnóstico, zombie configs, plugin triggers
-  alesco/        — específico Alesco Perú (contribuidores, proyectos, reglas)
+  {tu-equipo}/   — específico de tu organización (generado por install.ps1)
 
 agents/
   module-intelligence.md   — odoo-source 3 modos (Enterprise First)

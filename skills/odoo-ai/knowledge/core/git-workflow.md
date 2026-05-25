@@ -1,5 +1,5 @@
 ---
-title: Alesco Git Workflow
+title: Git Workflow
 domain: core
 version: 18.0
 edition: both
@@ -8,7 +8,7 @@ status: complete
 priority: P2
 ---
 
-# Alesco Git Workflow
+# Git Workflow
 
 ## Branch Model
 

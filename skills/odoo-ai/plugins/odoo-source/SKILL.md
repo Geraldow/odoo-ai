@@ -405,10 +405,10 @@ Use codesearch search tool:
 # Buscar en proyecto custom específico
 Use codesearch search tool:
   query: "{pattern}"
-  repo: "{project}"         # ej: "intiflow", "aeca", "conservial"
+  repo: "{project}"         # ej: "mi-proyecto", "proyecto-b"
 ```
 
 ## Resources
 
 - **Source Enterprise**: `{EnterprisePath from config.local.yaml}` — módulos Enterprise (alias codesearch: `enterprise`)
-- **Proyectos custom**: `{ProjectsRoot}\18\{project}\` (aliases: `intiflow`, `aeca`, `conservial`, `omnia`)
+- **Proyectos custom**: `{ProjectsRoot}\18\{project}\` (alias: nombre del repo git de tu proyecto)

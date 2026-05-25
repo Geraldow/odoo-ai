@@ -23,7 +23,7 @@ Set-StrictMode -Version Latest
 
 $skillRoot = Split-Path $PSScriptRoot -Parent
 $configFile = Join-Path $skillRoot "config.local.yaml"
-$contribFile = Join-Path $skillRoot "plugins\odoo-development-alesco\CONTRIBUTING.md"
+$contribFile = Join-Path $skillRoot "knowledge\contributors.md"
 $installHooks = Join-Path $PSScriptRoot "git-hooks\install-hooks.ps1"
 $defaultOdooRoot = Join-Path "C:\" "Development\Odoo"
 
