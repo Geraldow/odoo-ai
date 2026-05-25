@@ -21,7 +21,7 @@ Este archivo contiene las reglas de desarrollo que gobiernan TODO el trabajo Odo
 
 **Orden de búsqueda en TODO el ecosistema** (MUST respetar siempre):
 
-```
+```text
 1. Enterprise source local:  `{EnterprisePath — ver config.local.yaml / $cfg.EnterprisePath}`
 2. Community source local:   `{CommunityPath}\{version} — ver config.local.yaml / $cfg.CommunityPath`
 3. Proyectos v18:            `{ProjectsRoot}\18\ — ver config.local.yaml / $cfg.ProjectsRoot`
@@ -77,7 +77,7 @@ Cuando el usuario indica un nuevo proyecto activo ("ahora trabaja en [proyecto]"
 
 ### Modo B (proyecto independiente) — PARALELO
 
-```
+```text
 PARALLEL:
   scripts/odoo-version-detect.ps1        → VERSION + EDITION
   scripts/module-intelligence.ps1        → análisis 10 pasos + Engram save (Paso 11)
@@ -91,7 +91,7 @@ SEQUENTIAL después:
 
 ### Modo A (workspace raíz) — SECUENCIAL
 
-```
+```text
 1. Resolver proyecto activo (ver arriba)
 2. PARALLEL con path del módulo específico:
    scripts/odoo-version-detect.ps1 -Path {proyecto}/{módulo}
@@ -208,7 +208,7 @@ Para instalar en un repo: `pwsh ~/.claude/skills/odoo-ai/scripts/git-hooks/insta
 
 ## Estructura knowledge/ (referencia)
 
-```
+```text
 knowledge/
   core/          — patrones transversales todas las versiones
   patterns/      — patrones técnicos (wizard, cron, portal, mail...)
