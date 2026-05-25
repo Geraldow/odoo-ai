@@ -7,21 +7,20 @@
 ## 1. Visión General del Ecosistema
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 flowchart LR
     Dev["Desarrollador"] -->|Ejecuta comandos| CLI["Claude Code CLI"]
     CLI -->|Carga/Usa| Adp["Adaptadores Core"]
-    subgraph Motores["Motores de Ejecución"]
-        Adp -->|Usa modelo principal| Cl["Claude Antigravity"]
-        Adp -->|Usa agente local| Agy["Agy Local"]
-        Adp -->|Genera consultas ORM| Cx["Codex ORM"]
-        Adp -->|Asiste UI/UX| Cp["Copilot Frontend"]
+    subgraph Motores["Adaptadores de Ejecución"]
+        Adp -->|Razonamiento complejo| Cl["Claude Code"]
+        Adp -->|Documentación / exploración| Agy["Antigravity (agy)"]
+        Adp -->|Generación de código| Cx["Codex"]
+        Adp -->|Completado inline| Cp["Copilot"]
     end
-    subgraph Ext["Ecosystem Tools (External)"]
-        style Ext stroke-dasharray: 5 5
-        Iris["Iris MCP Server"]
+    subgraph Orq["Orquestador"]
+        Iris["Iris MCP Server\norquesta fases SDD"]
     end
-    Iris -.->|Orquesta / Delega tareas| CLI
+    Iris -->|Delega via iris_delegate| CLI
 ```
 
 ---
@@ -29,7 +28,7 @@ flowchart LR
 ## 2. Flujo de Orquestación SDD
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 sequenceDiagram
     autonumber
     actor Dev as Desarrollador
@@ -55,7 +54,7 @@ sequenceDiagram
 ## 3. Phase→Adapter Routing
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 flowchart TD
     subgraph Fases["Fases del Proceso SDD"]
         direction TB
@@ -105,7 +104,7 @@ flowchart TD
 ## 4. Engram IPC Pipeline
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 sequenceDiagram
     autonumber
     participant Iris as Iris (Orquestador Externo)
@@ -132,7 +131,7 @@ sequenceDiagram
 ## 5. Skills Hub Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 flowchart TD
     subgraph Hubs["Skills Hub Architecture"]
         direction TB
@@ -173,19 +172,19 @@ flowchart TD
 | **Phase→adapter routing estático vs dinámico** | Enrutamiento dinámico basado en LLM Router. | Mayor determinismo técnico y menor consumo de tokens al asignar fases predecibles a adaptadores óptimos. | Menor adaptabilidad automática ante tareas altamente atípicas, pero mayor fiabilidad en producción. |
 | **confirm_threshold como two-phase commit** | Commit directo de una sola fase (Auto-commit). | Garantiza que tanto la memoria del agente como los archivos físicos estén sincronizados antes de marcar la fase como exitosa. | Aumento en el número de operaciones de red, pero elimina por completo los estados inconsistentes. |
 | **summary truncado en lugar de output completo** | Retorno de outputs completos en cada llamada del CLI. | Prevención del desbordamiento del contexto de la conversación (bloat), lo que preserva la consistencia semántica. | El orquestador debe consultar explícitamente Engram para obtener detalles finos de la ejecución si los requiere. |
-| **semble para búsqueda semántica** | Búsqueda exacta de cadenas por ripgrep (grep). | Capacidad de relacionar conceptos abstractos de Odoo y OCA sin depender de nombres exactos de variables o clases. | Requiere indexación periódica en background, pero mejora drásticamente la calidad de los hallazgos en codebases masivos. |
+| **CodeGraph para búsqueda estructural** | Búsqueda exacta de cadenas por ripgrep (grep), Semble (semántico). | AST real via tree-sitter: ~57% menos tokens y ~71% menos tool calls. Sub-millisecond lookups. Sin indexación periódica — file watcher automático. | Requiere inicialización del índice (`codegraph init`), pero no depende de vectores semánticos ni embeddings. |
 
 ---
 
 ## 7. Flujo de Datos
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#F9FAFB', 'primaryColor': '#1E3A5F', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#1E3A5F', 'secondaryColor': '#6B7280', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#475569', 'tertiaryColor': '#0D9488', 'tertiaryTextColor': '#FFFFFF', 'lineColor': '#9CA3AF', 'textColor': '#111827', 'clusterBkg': '#F3F4F6', 'clusterBorder': '#D1D5DB', 'fontFamily': 'Inter, Roboto, sans-serif'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#0d1117', 'primaryColor': '#161b22', 'primaryTextColor': '#FFFFFF', 'primaryBorderColor': '#22d3ee', 'secondaryColor': '#1e1e2e', 'secondaryTextColor': '#FFFFFF', 'secondaryBorderColor': '#a855f7', 'tertiaryColor': '#0d2a2a', 'tertiaryTextColor': '#FFFFFF', 'tertiaryBorderColor': '#22d3ee', 'lineColor': '#a855f7', 'textColor': '#e6edf3', 'clusterBkg': '#0a1628', 'clusterBorder': '#22d3ee'}}}%%
 flowchart LR
     Eng["Engram (Memoria)"] <-->|Sincroniza estado| Core["odoo-ai Core"]
     Core <-->|Enruta tareas| Adp["Adaptadores (Ejecutores)"]
-    Adp <-->|Consulta contexto| Sem["Semble (Búsqueda)"]
-    Sem <-->|Indexa memoria| Eng
+    Adp <-->|Consulta contexto| CG["CodeGraph (AST)"]
+    CG <-->|Indexa símbolos| Eng
 ```
 
 ---
@@ -196,4 +195,4 @@ flowchart LR
 |-------------|-------------|-----|----------|
 | Iris MCP Server | github.com/Geraldow/iris | Orquestador multi-agente: delega tareas SDD a Claude, Gemini, Codex, Copilot según la fase | Integración externa — proyecto separado |
 | Engram | engram.sh | Memoria persistente cross-session | Dependencia directa |
-| semble | github.com/MinishLab/semble | Búsqueda semántica de código | Herramienta complementaria |
+| CodeGraph | github.com/colbymchenry/codegraph | Búsqueda estructural de código AST (tree-sitter), MCP server | Dependencia directa |
