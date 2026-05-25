@@ -75,7 +75,7 @@ jobs:
         run: |
           $missing = @()
           if (Test-Path "skills") {
-            Get-ChildItem -Path "skills" -Directory | Where-Object { $_.Name -notlike '_*' } | ForEach-Object {
+            Get-ChildItem -Path "skills" -Directory | Where-Object { $_.Name -notlike '_*' -and $_.Name -ne 'archived' } | ForEach-Object {
               $skillMd = Join-Path $_.FullName "SKILL.md"
               if (-not (Test-Path -LiteralPath $skillMd)) {
                 $missing += "  ❌ Missing: skills/$($_.Name)/SKILL.md"
@@ -111,7 +111,7 @@ jobs:
               echo "$RESULT"
               ISSUES=$((ISSUES + 1))
             fi
-          done < <(find skills/engram-drive skills/odoo-development skills/odoo-contribute -maxdepth 1 -name "SKILL.md" 2>/dev/null || true)
+          done < <(find skills/engram-drive skills/odoo-ai skills/odoo-contribute -maxdepth 1 -name "SKILL.md" 2>/dev/null || true)
           if [ "$ISSUES" -gt 0 ]; then
             echo "❌ $ISSUES file(s) have code blocks without language identifiers"
             exit 1
