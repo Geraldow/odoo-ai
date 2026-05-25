@@ -202,7 +202,8 @@ Write-Host "  Installing skills to: $skillsDest" -ForegroundColor Cyan
 
 [System.IO.Directory]::CreateDirectory($skillsDest) | Out-Null
 
-$skills = [System.IO.Directory]::GetDirectories($skillsSource)
+$skills = [System.IO.Directory]::GetDirectories($skillsSource) |
+          Where-Object { [System.IO.Path]::GetFileName($_) -ne "archived" }
 foreach ($skill in $skills) {
     $name = [System.IO.Path]::GetFileName($skill)
     $dest = [System.IO.Path]::Combine($skillsDest, $name)
