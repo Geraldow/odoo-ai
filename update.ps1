@@ -1,18 +1,16 @@
 # update.ps1
-# Pulls the latest version of each external plugin from its original GitHub repo.
+# Updates the odoo-ai skill to the latest version from the official repository.
 # Run from the odoo-ai directory: powershell -File update.ps1
 #
-# External plugins managed here:
-#   ahmed-lakosha/odoo-plugins
-#   maingocdoan1809/odoo-claude-skills
-#   PeterUrban111/odoo-claude-skills
-#   unclecatvn/agent-skills
+# Note: Community plugins (ahmedlakos, fhidalgo, maingocdoan, peterurban, unclecatvn)
+# were archived in v3.0. The skill now ships a self-contained knowledge base.
+# Archived plugins remain at: skills/archived/
 
 $ErrorActionPreference = "Continue"
 
 Write-Host ""
 Write-Host "  odoo-ai updater" -ForegroundColor Magenta
-Write-Host "  Pulling latest plugin versions from upstream." -ForegroundColor DarkGray
+Write-Host "  Pulling latest version from upstream." -ForegroundColor DarkGray
 Write-Host ""
 
 # ── PREREQUISITES ─────────────────────────────────────────────────────────────
@@ -22,98 +20,54 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-$pluginsBase = [System.IO.Path]::Combine($PSScriptRoot, "skills", "odoo-development", "plugins")
+# ── PULL LATEST ───────────────────────────────────────────────────────────────
 
-if (-not [System.IO.Directory]::Exists($pluginsBase)) {
-    Write-Host "  [!!] plugins directory not found: $pluginsBase" -ForegroundColor Red
-    exit 1
-}
+$repoRoot = $PSScriptRoot
 
-# ── PLUGIN REGISTRY ───────────────────────────────────────────────────────────
+Write-Host "  Checking for updates..." -ForegroundColor Cyan
 
-$plugins = @(
-    @{
-        name   = "odoo-development-ahmedlakos"
-        repo   = "https://github.com/ahmed-lakosha/odoo-plugins.git"
-        branch = "main"
-    },
-    @{
-        name   = "odoo-development-maingocdoan"
-        repo   = "https://github.com/maingocdoan1809/odoo-claude-skills.git"
-        branch = "main"
-    },
-    @{
-        name   = "odoo-development-peterurban"
-        repo   = "https://github.com/PeterUrban111/odoo-claude-skills.git"
-        branch = "main"
-    },
-    @{
-        name   = "odoo-development-unclecatvn"
-        repo   = "https://github.com/unclecatvn/agent-skills.git"
-        branch = "main"
-    }
-)
+& git -C $repoRoot fetch origin 2>&1 | Out-Null
 
-# ── UPDATE LOOP ───────────────────────────────────────────────────────────────
+$local  = & git -C $repoRoot rev-parse HEAD
+$remote = & git -C $repoRoot rev-parse origin/main 2>&1
 
-$updated = 0
-$failed  = 0
-
-foreach ($plugin in $plugins) {
-    $dest = [System.IO.Path]::Combine($pluginsBase, $plugin.name)
-
-    Write-Host "  Updating $($plugin.name)..." -ForegroundColor Cyan
-
-    # Clone fresh into a temp folder, then swap
-    $tmp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "odoo-ai-update-$($plugin.name)")
-
-    if ([System.IO.Directory]::Exists($tmp)) {
-        [System.IO.Directory]::Delete($tmp, $true)
-    }
-
-    & git clone --depth 1 --branch $plugin.branch $plugin.repo $tmp 2>&1 | Out-Null
-
-    if ($LASTEXITCODE -ne 0) {
-        # Try without --branch in case default branch name differs
-        & git clone --depth 1 $plugin.repo $tmp 2>&1 | Out-Null
-    }
+if ($local -eq $remote) {
+    Write-Host "  [~] Already up to date." -ForegroundColor DarkGray
+} else {
+    Write-Host "  [~~] Updates available — pulling..." -ForegroundColor Yellow
+    & git -C $repoRoot pull origin main
 
     if ($LASTEXITCODE -eq 0) {
-        # Remove embedded .git so we don't re-create a gitlink
-        $innerGit = [System.IO.Path]::Combine($tmp, ".git")
-        if ([System.IO.Directory]::Exists($innerGit)) {
-            [System.IO.Directory]::Delete($innerGit, $true)
-        }
-
-        # Swap: remove old, move new in
-        if ([System.IO.Directory]::Exists($dest)) {
-            [System.IO.Directory]::Delete($dest, $true)
-        }
-        [System.IO.Directory]::Move($tmp, $dest)
-
-        Write-Host "  [OK] $($plugin.name)" -ForegroundColor Green
-        $updated++
+        Write-Host "  [OK] odoo-ai updated to latest version." -ForegroundColor Green
     } else {
-        Write-Host "  [!!] Failed to clone $($plugin.repo)" -ForegroundColor Red
-        Write-Host "       Check your internet connection or the repo URL." -ForegroundColor DarkGray
-        if ([System.IO.Directory]::Exists($tmp)) {
-            [System.IO.Directory]::Delete($tmp, $true)
-        }
-        $failed++
+        Write-Host "  [!!] Pull failed — check for local changes or merge conflicts." -ForegroundColor Red
+        exit 1
     }
 }
 
-# ── SUMMARY ───────────────────────────────────────────────────────────────────
+# ── REINSTALL SKILLS ──────────────────────────────────────────────────────────
 
 Write-Host ""
-if ($failed -eq 0) {
-    Write-Host "  $updated plugin(s) updated successfully." -ForegroundColor Magenta
-    Write-Host ""
-    Write-Host "  Next: copy updated plugins to your skills directory." -ForegroundColor Cyan
-    Write-Host "  Run install.ps1 again, or copy manually:" -ForegroundColor DarkGray
-    Write-Host "    Copy-Item -Recurse -Force skills\odoo-development\plugins\* ``" -ForegroundColor DarkGray
-    Write-Host "      `$env:USERPROFILE\.claude\skills\odoo-development\plugins\" -ForegroundColor DarkGray
-} else {
-    Write-Host "  $updated updated, $failed failed." -ForegroundColor Yellow
+Write-Host "  Reinstalling skills..." -ForegroundColor Cyan
+
+$skillsSource = [System.IO.Path]::Combine($repoRoot, "skills")
+$skillsDest   = [System.IO.Path]::Combine($env:USERPROFILE, ".claude", "skills")
+
+$skills = [System.IO.Directory]::GetDirectories($skillsSource) |
+          Where-Object { [System.IO.Path]::GetFileName($_) -ne "archived" }
+
+foreach ($skill in $skills) {
+    $name = [System.IO.Path]::GetFileName($skill)
+    $dest = [System.IO.Path]::Combine($skillsDest, $name)
+
+    if ([System.IO.Directory]::Exists($dest)) {
+        [System.IO.Directory]::Delete($dest, $true)
+    }
+
+    Copy-Item -LiteralPath $skill -Destination $dest -Recurse
+    Write-Host "  [+] $name" -ForegroundColor Green
 }
+
+Write-Host ""
+Write-Host "  Update complete." -ForegroundColor Magenta
 Write-Host ""

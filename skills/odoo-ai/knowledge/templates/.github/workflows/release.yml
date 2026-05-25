@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - produccion
+
+permissions:
+  contents: write
+
+jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate changelog
+        shell: bash
+        run: |
+          test -f CHANGELOG.md
+          grep -q "^## \\[" CHANGELOG.md
+      - name: Show recent commits
+        run: git log -10 --oneline
