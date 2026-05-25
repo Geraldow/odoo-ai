@@ -2,6 +2,16 @@
 
 Todos los cambios notables de este proyecto se documentarán en este archivo, siguiendo el formato de [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [3.0.1] - 2026-05-25
+
+### Added
+- `ARCHITECTURE.md`, `PRD.md`: documentación de arquitectura y product requirements del ecosistema v3
+- `.codegraph/.gitignore`: reglas para excluir artefactos locales del índice CodeGraph
+
+### Changed
+- `scripts/sdd_odoo_check.py`: simplificado a guard de escritura únicamente — eliminado redirect de Read/Glob/Grep a codesearch MCP (era ruido innecesario)
+- `config-templates/engram-sync-config.template.json`: eliminado campo `codesearch` obsoleto del bloque `defaults`
+
 ## [3.0] - 2026-05-25
 
 ### Añadido
