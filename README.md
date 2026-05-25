@@ -39,7 +39,7 @@ Most AI coding tools forget everything when the session ends. Most Odoo projects
 | Skill | What it does |
 |---|---|
 | [`engram-drive`](skills/engram-drive/) | Sync team memory via Google Drive — each member writes exclusively to their own folder, imports from everyone else. Zero conflicts, zero servers. |
-| [`odoo-development`](skills/odoo-development/) | Full Odoo development hub — models, computed fields, views, ORM patterns, security rules, OWL components, automated tests. Covers versions 14–19. |
+| [`odoo-ai`](skills/odoo-ai/) | Full Odoo development hub — models, computed fields, views, ORM patterns, security rules, OWL components, automated tests. Covers versions 14–19. Self-contained knowledge base — no external plugins required. |
 | [`odoo-contribute`](skills/odoo-contribute/) | Git workflow, branch safety checks, CI/CD pipelines, OCA conventions, and conventional commit standards. |
 | `sdd-init` `sdd-explore` `sdd-new` `sdd-propose` `sdd-spec` `sdd-design` `sdd-tasks` `sdd-ff` `sdd-apply` `sdd-verify` `sdd-report` `sdd-continue` `sdd-archive` | 13 Spec-Driven Development skills — a complete methodology from exploration to archived implementation. |
 | [`skill-evolver`](skills/skill-evolver/) | Detects reusable patterns that emerge during development sessions and codifies them into new skills automatically. |
@@ -67,7 +67,7 @@ flowchart TB
     subgraph skills ["  Skills Layer  "]
         direction LR
         sdd["📐 SDD\n13 phases"]
-        odo["🔧 odoo-development\nodoo-contribute"]
+        odo["🔧 odoo-ai\nodoo-contribute"]
         ev["⚡ skill-evolver"]
     end
 
@@ -135,7 +135,7 @@ Before running the installer, make sure you have the following:
 | [engram plugin](https://github.com/Gentleman-Programming/engram): `claude plugin install engram` | Persistent memory layer — stores and retrieves observations across sessions |
 | [Google Drive for Desktop](https://drive.google.com/drive/download) | Mounts your Drive as a local folder — required for team memory sync via `engram-drive` |
 | [git](https://git-scm.com) | Required to clone this repo and to auto-clone Odoo Community source |
-| Odoo source code (versions 14–19) | Used by `odoo-development` for API lookups, view references, and module analysis |
+| Odoo source code (versions 14–19) | Used by `odoo-ai` for API lookups, view references, and module analysis |
 
 ### Installation
 
@@ -161,7 +161,7 @@ The installer will walk you through:
 
 ### Keeping plugins up to date
 
-To pull the latest version of all external plugins from their original repositories:
+To pull the latest version from upstream and reinstall skills:
 
 ```powershell
 powershell -File update.ps1
@@ -261,13 +261,13 @@ The `scripts/` directory contains Claude Code hooks that run automatically durin
 | Script | Hook event | What it does |
 |---|---|---|
 | `engram-detect.py` | `SessionStart` | Detects which engram project is active based on CWD; injects `project=` reminder into context. In single-project mode, also reads and injects `AGENTS.md` from the project root |
-| `odoo-detect.py` | `SessionStart` | Detects `__manifest__.py` in CWD; injects mandatory odoo-development skill loading sequence |
+| `odoo-detect.py` | `SessionStart` | Detects `__manifest__.py` in CWD; injects mandatory odoo-ai skill loading sequence |
 | `engram-session-start.ps1` | `SessionStart` + `PostCompact` | Imports teammates' latest memories from Google Drive at session open and after compaction. Resolves Drive path via `detect-environment.ps1` |
 | `odoo-ai-update-check.ps1` | `SessionStart` | Checks for new commits on `origin/main`; notifies team if behind with commit list and update instructions |
 | `workflow-state-check.py` | `SessionStart` | Detects active git workflow (Odoo `st_*`/`db_*` branches or GitFlow); injects current branch and protocol as context |
 | `sdd_task_check.py` | `UserPromptSubmit` + `PostCompact` | Injects SDD task-size classification reminder before every prompt |
-| `odoo-enforce.py` | `UserPromptSubmit` + `PostCompact` | Detects Odoo project by CWD; scans prompt for humanized keywords (ES+EN) and injects targeted skill reminders — odoo-development, odoo-source, ORM, report, or security |
-| `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to classify task size, run `/sdd-ff` for Moderado/Complejo, and load odoo-development before writing any code |
+| `odoo-enforce.py` | `UserPromptSubmit` + `PostCompact` | Detects Odoo project by CWD; scans prompt for humanized keywords (ES+EN) and injects targeted skill reminders — odoo-ai, odoo-source, ORM, report, or security |
+| `sdd_odoo_check.py` | `PreToolUse` | Guards Odoo file edits — reminds to classify task size, run `/sdd-ff` for Moderado/Complejo, and load odoo-ai before writing any code |
 | `git-protocol-check.py` | `PreToolUse` | Intercepts `git`/`gh` Bash commands; injects branch safety protocol reminder before commits, pushes, and merges |
 | `secrets-scan.py` | `PreToolUse` | Scans file content before `Write`/`Edit` operations; blocks writes containing API keys, passwords, private keys, or credentials |
 | `engram-project-track.py` | `PostToolUse` | Tracks active engram project as files are edited; injects `project=` update on context switch and loads `AGENTS.md` from the newly active project |
@@ -284,7 +284,7 @@ Every prompt goes through a two-stage scan. First, it checks whether the CWD is 
 flowchart TD
     P(["User Prompt"]) --> OD{"__manifest__.py\nat depth ≤ 2?"}
     OD -->|"no"| EXIT(["exit silently"])
-    OD -->|"yes"| BASE["[ODOO SKILL REQUIRED]\nload odoo-development\nrun version-detect + module-intelligence"]
+    OD -->|"yes"| BASE["[ODOO SKILL REQUIRED]\nload odoo-ai\nrun version-detect + module-intelligence"]
 
     BASE --> KW{"Keyword scan\nES + EN"}
 
@@ -312,7 +312,7 @@ Keyword lists are deliberately humanized — they match how developers actually 
 
 ## Odoo source setup
 
-The `odoo-development` skill uses a local copy of the Odoo source for API lookups, view references, and accurate module analysis. The installer creates this structure automatically:
+The `odoo-ai` skill uses a local copy of the Odoo source for API lookups, view references, and accurate module analysis. The installer creates this structure automatically:
 
 ```
 C:\Development\Odoo\
@@ -570,7 +570,7 @@ odoo-ai/
 ├── assets/
 │   └── odoo-ai-banner.png
 ├── install.ps1                    ← run this first
-├── update.ps1                     ← pull latest external plugins
+├── update.ps1                     ← pull latest version from upstream
 ├── scripts/                       ← Claude Code hook scripts (installed to ~/.claude/scripts/)
 │   ├── engram-detect.py           ← SessionStart: detect active engram project
 │   ├── odoo-detect.py             ← SessionStart: detect Odoo project, load skill
@@ -589,7 +589,7 @@ odoo-ai/
 │   └── engram-sync.ps1            ← Manual sync: single-project or multi-project
 ├── skills/
 │   ├── engram-drive/              ← team memory sync via Google Drive
-│   ├── odoo-development/          ← Odoo development hub (v14–19)
+│   ├── odoo-ai/                   ← Odoo development hub (v14–19) — self-contained knowledge base
 │   ├── odoo-contribute/           ← git, CI/CD, and contribution workflow
 │   ├── sdd-init/                  ← SDD: initialize
 │   ├── sdd-explore/               ← SDD: codebase exploration
@@ -609,7 +609,7 @@ odoo-ai/
 ├── config-templates/
 │   ├── engram-sync-config.template.json   ← template for ~/.claude/engram-sync-config.json
 │   ├── settings-hooks.template.json       ← hooks block to add to ~/.claude/settings.json
-│   └── CONTRIBUTING.template.md           ← template for ~/.claude/skills/odoo-development/CONTRIBUTING.md (fill in locally — never commit)
+│   └── CONTRIBUTING.template.md           ← template for ~/.claude/skills/odoo-ai/CONTRIBUTING.md (fill in locally — never commit)
 ├── LICENSE
 └── README.md
 ```
@@ -629,6 +629,8 @@ odoo-ai is built on the shoulders of outstanding open-source work:
 | [odoo-claude-skills](https://github.com/PeterUrban111/odoo-claude-skills) | [PeterUrban111](https://github.com/PeterUrban111) | Curated skills covering actions, API, QWeb, server actions, and visual patterns |
 | [agent-skills](https://github.com/unclecatvn/agent-skills) | [unclecatvn](https://github.com/unclecatvn) | Agent-oriented skill architecture and Odoo development patterns |
 | [odoo-development-skill](https://github.com/fhidalgodev/odoo-development-skill) | [fhidalgodev](https://github.com/fhidalgodev) | Universal Odoo development skill based on strict OCA standards (v14–19), with code review and upgrade analysis agents |
+
+*Note: The original community plugins are archived at `skills/archived/` for reference.*
 
 ---
 

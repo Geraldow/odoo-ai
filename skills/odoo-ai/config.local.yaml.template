@@ -1,0 +1,22 @@
+# odoo-ai local configuration - machine-specific, gitignored
+# Copy this file to config.local.yaml and fill in your values.
+
+paths:
+  enterprise: "C:\\Development\\Odoo\\Enterprise"   # Enterprise source root (all versions)
+  community:  "C:\\Development\\Odoo\\Community"    # Community source root
+  projects:   "C:\\Development\\Odoo"               # Odoo projects root (contains 18\, 19\)
+  odoo_bin:                                          # leave empty for auto-detection
+    - "C:\\Development\\Odoo\\18\\odoo-bin"
+    - "C:\\Development\\Odoo\\19\\odoo-bin"
+
+docker:
+  port: 18069
+
+contributor:
+  name:   ""               # git config user.name
+  email:  ""               # git config user.email
+  github: ""               # gh api user --jq .login
+  role:   "developer"      # developer | lead | reviewer
+
+engram:
+  drive_path: ""           # e.g. "G:\\My Drive\\Engram"

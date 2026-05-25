@@ -1,0 +1,91 @@
+#!/usr/bin/env pwsh
+# pre-push — Odoo project git hook
+# Classifies branch, shows commit summary, requires explicit "si" confirmation
+# Blocks: force push, delete remote branch, direct push to protected branches
+# Branch rules: st_* and st_produccion are allowed; produccion and db_* are restricted
+# Customize protected/allowed patterns in .git-hooks-config.json at repo root
+# NO Claude/MCP calls — pure PowerShell only
+
+$ErrorActionPreference = "Stop"
+
+$remote = $args[0]
+
+$currentBranch = git branch --show-current 2>&1
+
+# ─── Load config (optional) ──────────────────────────────────────────────────
+$repoRoot = git rev-parse --show-toplevel 2>&1
+$configFile = Join-Path $repoRoot ".git-hooks-config.json"
+$allowedPatterns   = @('^st_')
+$restrictedPatterns = @('^produccion$', '^db_')
+$confirmWord = "si"
+
+if (Test-Path $configFile) {
+    try {
+        $cfg = Get-Content $configFile -Raw | ConvertFrom-Json
+        if ($cfg.allowed_branch_patterns)    { $allowedPatterns    = $cfg.allowed_branch_patterns }
+        if ($cfg.restricted_branch_patterns) { $restrictedPatterns = $cfg.restricted_branch_patterns }
+        if ($cfg.confirm_word)               { $confirmWord        = $cfg.confirm_word }
+    } catch {
+        Write-Host "Warning: .git-hooks-config.json parse error — using defaults."
+    }
+}
+
+Write-Host ""
+Write-Host "─────────────────────────────────────────"
+Write-Host "PRE-PUSH Branch Safety Check"
+Write-Host "─────────────────────────────────────────"
+Write-Host "Remote:  $remote"
+Write-Host "Branch:  $currentBranch"
+Write-Host ""
+
+# ─── Block force push (detect + in refspec) ──────────────────────────────────
+$refLines = @()
+while ($line = [Console]::ReadLine()) {
+    if ($null -eq $line) { break }
+    $refLines += $line
+}
+
+foreach ($ref in $refLines) {
+    if ($ref -match '^\+') {
+        Write-Host "PUSH BLOCKED: Force push detected. Permanently prohibited."
+        exit 1
+    }
+}
+
+# ─── Branch classification ───────────────────────────────────────────────────
+$isAllowed    = $allowedPatterns    | Where-Object { $currentBranch -match $_ }
+$isRestricted = $restrictedPatterns | Where-Object { $currentBranch -match $_ }
+
+if ($isRestricted) {
+    Write-Host "PUSH BLOCKED: '$currentBranch' is a restricted branch."
+    Write-Host "  Direct push to this branch is prohibited."
+    Write-Host "  Use the PR workflow: st_* → PR → $currentBranch"
+    exit 1
+}
+
+if (-not $isAllowed) {
+    Write-Host "WARNING: '$currentBranch' is not a recognized staging branch."
+    Write-Host ""
+    Write-Host "Proceed anyway? Type '$confirmWord' to confirm: " -NoNewline
+    $answer = [Console]::ReadLine()
+    if ($answer -ne $confirmWord) {
+        Write-Host "Push cancelled."
+        exit 1
+    }
+}
+
+# ─── Commit summary ─────────────────────────────────────────────────────────
+Write-Host "Commits to push:"
+git log --oneline "@{u}..HEAD" 2>&1 | ForEach-Object { Write-Host "  $_" }
+Write-Host ""
+
+# ─── Explicit confirmation ──────────────────────────────────────────────────
+Write-Host "Push to $remote/$currentBranch — authorize? Type '$confirmWord' to proceed: " -NoNewline
+$confirm = [Console]::ReadLine()
+if ($confirm -ne $confirmWord) {
+    Write-Host "Push cancelled."
+    exit 1
+}
+
+Write-Host "Push authorized. Proceeding..."
+exit 0

@@ -1,0 +1,100 @@
+#!/usr/bin/env pwsh
+# pre-pr — Odoo project git hook / manual checklist
+# Run before opening a PR to validate readiness
+# Usage: pwsh ~/.claude/skills/git-hooks/pre-pr [-RepoPath .] [-TargetBranch produccion]
+# NO Claude/MCP calls — pure PowerShell only
+
+param(
+    [string]$RepoPath     = ".",
+    [string]$TargetBranch = "produccion"
+)
+
+$ErrorActionPreference = "Stop"
+
+$currentBranch = git -C $RepoPath branch --show-current 2>&1
+$aheadCount    = (git -C $RepoPath rev-list "@{u}..HEAD" 2>&1 | Measure-Object -Line).Lines
+
+Write-Host ""
+Write-Host "─────────────────────────────────────────"
+Write-Host "PR Readiness Checklist"
+Write-Host "─────────────────────────────────────────"
+Write-Host "Branch:  $currentBranch → $TargetBranch"
+Write-Host "Commits: $aheadCount ahead of upstream"
+Write-Host ""
+
+$passed  = 0
+$failed  = 0
+$warned  = 0
+
+function Write-CheckResult {
+    param([bool]$Condition, [string]$Label, [string]$Fix = "", [bool]$IsWarning = $false)
+    if ($Condition) {
+        Write-Host "  ✅ $Label"
+        $script:passed++
+    } elseif ($IsWarning) {
+        Write-Host "  ⚠️  $Label"
+        if ($Fix) { Write-Host "     → $Fix" }
+        $script:warned++
+    } else {
+        Write-Host "  ❌ $Label"
+        if ($Fix) { Write-Host "     → $Fix" }
+        $script:failed++
+    }
+}
+
+# ─── Branch check ────────────────────────────────────────────────────────────
+Write-CheckResult ($currentBranch -match '^st_') `
+    "Source branch follows naming convention (st_*)" `
+    "Rename branch: git branch -m st_<project>"
+
+# ─── Uncommitted changes ────────────────────────────────────────────────────
+$dirty = git -C $RepoPath status --porcelain 2>&1
+Write-CheckResult (-not $dirty) `
+    "No uncommitted changes" `
+    "Commit or stash changes before opening PR"
+
+# ─── Commits ahead of upstream ──────────────────────────────────────────────
+Write-CheckResult ($aheadCount -gt 0) `
+    "Branch has commits to merge ($aheadCount)" `
+    "Nothing to PR — add commits first"
+
+# ─── ACL validator (if script available) ────────────────────────────────────
+$aclScript = "$HOME/.claude/skills/odoo-ai/scripts/acl-validator.ps1"
+if (Test-Path $aclScript) {
+    $manifestFiles = Get-ChildItem -Path $RepoPath -Name "__manifest__.py" -Recurse -Depth 3 -ErrorAction SilentlyContinue
+    foreach ($mf in $manifestFiles) {
+        $modPath = Split-Path (Join-Path $RepoPath $mf) -Parent
+        & pwsh $aclScript -ModulePath $modPath 2>&1 | Out-Null
+        $aclOk = $LASTEXITCODE -eq 0
+        $modName = Split-Path $modPath -Leaf
+        Write-CheckResult $aclOk "ACL coverage: $modName" "Add missing entries to security/ir.model.access.csv"
+    }
+} else {
+    Write-CheckResult $false "ACL validator not found" "Install odoo-ai scripts" -IsWarning $true
+}
+
+# ─── Manifest version check ─────────────────────────────────────────────────
+$manifests = Get-ChildItem -Path $RepoPath -Name "__manifest__.py" -Recurse -Depth 3 -ErrorAction SilentlyContinue
+foreach ($mf in $manifests) {
+    $content = Get-Content (Join-Path $RepoPath $mf) -Raw -ErrorAction SilentlyContinue
+    $hasVersion = $content -match "'version'\s*:\s*'[\d\.]+'"
+    $modName = Split-Path (Split-Path (Join-Path $RepoPath $mf) -Parent) -Leaf
+    Write-CheckResult $hasVersion "Manifest has version field: $modName" "Add 'version': '18.0.x.y.z' to __manifest__.py" -IsWarning $true
+}
+
+# ─── Summary ─────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "─────────────────────────────────────────"
+Write-Host "Result: $passed passed, $warned warnings, $failed failed"
+Write-Host ""
+
+if ($failed -gt 0) {
+    Write-Host "❌ PR NOT READY — fix the items above before opening."
+    exit 1
+} elseif ($warned -gt 0) {
+    Write-Host "⚠️  PR ready with warnings — review them before merging."
+    exit 0
+} else {
+    Write-Host "✅ PR ready — proceed with: gh pr create --base $TargetBranch"
+    exit 0
+}

@@ -1,0 +1,49 @@
+#!/usr/bin/env pwsh
+# pre-commit — Odoo project git hook
+# Verifies: committer identity (if CONTRIBUTING.md present) + ACL coverage
+# Install via: ~/.claude/skills/git-hooks/install-hooks.ps1 -RepoPath .
+# NO Claude/MCP calls — pure PowerShell only
+
+$ErrorActionPreference = "Stop"
+$repoRoot = git rev-parse --show-toplevel 2>&1
+if ($LASTEXITCODE -ne 0) { exit 0 }
+
+# ─── Identity check (optional — only if commit-identity-check.ps1 exists) ──
+$identityScript = "$HOME/.claude/skills/odoo-ai/scripts/commit-identity-check.ps1"
+if (Test-Path $identityScript) {
+    & pwsh $identityScript -RepoPath $repoRoot
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "COMMIT BLOCKED: Committer identity not authorized."
+        Write-Host "  See CONTRIBUTING.md for authorized contributors."
+        exit 1
+    }
+}
+
+# ─── ACL coverage check ─────────────────────────────────────────────────────
+# Check each staged module directory that has a models/ folder
+$stagedFiles = git diff --cached --name-only 2>&1
+$moduleDirs = $stagedFiles |
+    Where-Object { $_ -match 'models/.*\.py$' } |
+    ForEach-Object { ($_ -split '/')[0..1] -join '/' } |
+    Sort-Object -Unique
+
+$aclScript = "$HOME/.claude/skills/odoo-ai/scripts/acl-validator.ps1"
+$aclFailed = $false
+if ((Test-Path $aclScript) -and $moduleDirs) {
+    foreach ($dir in $moduleDirs) {
+        $fullPath = Join-Path $repoRoot $dir
+        if (Test-Path $fullPath) {
+            & pwsh $aclScript -ModulePath $fullPath
+            if ($LASTEXITCODE -eq 1) { $aclFailed = $true }
+        }
+    }
+}
+
+if ($aclFailed) {
+    Write-Host ""
+    Write-Host "COMMIT BLOCKED: ACL missing for one or more models. See output above."
+    exit 1
+}
+
+exit 0
